@@ -1,3 +1,10 @@
+**TODO**
+- hpa
+- karpenter
+- ingress alb
+- logging 
+- monitoring
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

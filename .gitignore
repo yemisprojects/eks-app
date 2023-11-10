@@ -5,6 +5,7 @@ kubeconfig_*
 .idea
 *tests*
 .terraform
+*less_modules
 
 #################################################################
 # Default .gitignore content for all terraform-aws-modules below
