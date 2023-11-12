@@ -1,7 +1,7 @@
 ################################################################################
 # EKS Cluster
 ################################################################################
-/*output "cluster_id" {
+output "cluster_id" {
   description = "The name/id of the EKS cluster."
   value       = aws_eks_cluster.eks_cluster.id
 }
@@ -72,12 +72,12 @@ output "node_group_private_version" {
 ################################################################################
 # EKS IRSA
 ################################################################################
-/*output "aws_iam_openid_connect_provider_arn" {
+output "aws_iam_openid_connect_provider_arn" {
   description = "AWS IAM Open ID Connect Provider ARN"
-  value = aws_iam_openid_connect_provider.oidc_provider.arn 
+  value       = aws_iam_openid_connect_provider.eks.arn
 }
 
-output "aws_iam_openid_connect_provider_extract_from_arn" {
+/*output "aws_iam_openid_connect_provider_extract_from_arn" {
   description = "AWS IAM Open ID Connect Provider extract from ARN"
   value = local.aws_iam_oidc_connect_provider_extract_from_arn
 }*/

@@ -1,0 +1,130 @@
+pipeline{
+    agent any
+
+    options {
+        timeout(time: 40, unit: 'MINUTES'), parallelsAlwaysFailFast()
+    }
+
+    tools{
+        jdk 'jdk17'
+        nodejs 'node16'
+    }
+
+    environment {
+        SONAR_SCANNER_HOME = tool 'sonarscanner'
+        DOCKER_REGISTRY = "yemisiomonijo/demonetflixapp"
+        DOCKER_REG_CRED = 'docker_reg_cred'
+        TMDB_API_KEY = credentials('tmdb_api_key')
+        /*AJ7AYe14eca3e76864yah319b92*/
+    }
+    stages {
+        stage('Git Checkout'){
+            steps{
+                git branch: 'build_app', url: 'https://github.com/yemisprojects/eks-cicd-project.git'
+                sh 'cd demo_app'
+            }
+        }
+        
+        stage('Build'){
+            steps{
+                sh "npm install"
+            }
+        }
+
+        stage("Sonarqube Analysis"){
+            steps{
+                withSonarQubeEnv('sonar-server') {
+                    sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=Netflix -Dsonar.projectKey=Netflix'''
+                }
+            }
+        }
+
+/*Update to parallel stage */
+        stage("Quality Gate"){
+           steps {
+                    timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true, credentialsId: 'sonar_cred' 
+                }
+            } 
+        }
+
+        stage('OWASP Dependency Scan') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+
+        stage('Trivy FileSystem scan') {
+            steps {
+                sh "trivy fs . > trivyfs.txt"
+            }
+        }
+
+        stage("Docker Build & Push"){
+            steps{
+                script{
+                   withDockerRegistry(credentialsId: 'docker_reg_cred', toolName: 'docker'){   
+                       sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
+                       sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                       sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage("Image Scan"){
+            steps{
+                sh "trivy image $DOCKER_REGISTRY:latest > trivyimage.txt" 
+            }
+        }
+
+        stage('Deploy to container'){
+            steps{
+                sh 'docker run -d --name testapp -p 8081:80 $DOCKER_REGISTRY:latest'
+            }
+        }
+
+        // stage('Deploy to kubernets'){
+        //     steps{
+        //         script{
+        //             dir('Kubernetes') {
+        //                 withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
+        //                         sh 'kubectl apply -f deployment.yml'
+        //                         sh 'kubectl apply -f service.yml'
+        //                 }   
+        //             }
+        //         }
+        //     }
+        // }
+
+    }
+
+/*Add slack integration */
+    post {
+
+     always {
+        emailext attachLog: true,
+            subject: "'${currentBuild.result}'",
+            body: "Project: ${env.JOB_NAME}<br/>" +
+                "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                "URL: ${env.BUILD_URL}<br/>",
+            to: 'postbox.aj99@gmail.com',
+            attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
+        }
+
+     always{
+        cleanWs(    
+                    cleanWhenNotBuilt: false,
+                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+                )
+     }
+
+    always{
+            sh 'sh "docker rmi $registry:V${BUILD_NUMBER} && docker rmi $registry:latest" '
+        }
+    }
+}

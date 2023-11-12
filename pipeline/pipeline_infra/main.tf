@@ -1,0 +1,187 @@
+
+data "aws_ami" "pipeline" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy*19"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "state"
+    values = ["available"]
+  }
+
+}
+
+data "http" "myip" {
+  url = "https://api.ipify.org/"
+}
+
+resource "aws_iam_role" "ec2" {
+  name = "eks-cluster-role"
+
+  assume_role_policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "eks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_iam_role_policy_attachment" "ssm" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  role       = aws_iam_role.ec2.name
+}
+
+resource "aws_iam_role_policy_attachment" "admin" {
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+  role       = aws_iam_role.ec2.name
+}
+
+resource "aws_iam_instance_profile" "ec2" {
+  name = "ec2-role"
+  role = aws_iam_role.ec2.name
+
+}
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.0.0"
+
+  name                    = var.vpc_name
+  cidr                    = var.vpc_cidr
+  azs                     = var.azs
+  map_public_ip_on_launch = true
+  public_subnets          = var.vpc_public_subnets
+  enable_nat_gateway      = false
+
+  public_subnet_tags = {
+    "Type" = "public_subnet"
+  }
+
+}
+
+#default jenkins: /var/lib/jenkins/secrets/initialAdminPassword
+resource "aws_instance" "jenkins" {
+  ami                         = data.aws_ami.pipeline.id
+  instance_type               = var.instance_type
+  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
+  subnet_id                   = module.vpc.public_subnets[0]
+  iam_instance_profile        = aws_iam_instance_profile.ec2.arn
+  key_name                    = var.ec2_key_name ? var.ec2_key_name : null
+  associate_public_ip_address = true
+  user_data                   = file("./user_data/install_jenkins.sh")
+
+  tags = {
+    "Name" = "jenkins"
+  }
+}
+
+#default user/password: admin/admin
+resource "aws_instance" "sonarqube" {
+  ami                         = data.aws_ami.pipeline.id
+  instance_type               = var.instance_type
+  vpc_security_group_ids      = [aws_security_group.sonarqube_sg.id]
+  subnet_id                   = module.vpc.public_subnets[1]
+  iam_instance_profile        = aws_iam_instance_profile.ec2.arn
+  key_name                    = var.ec2_key_name ? var.ec2_key_name : null
+  associate_public_ip_address = true
+  user_data                   = file("./user_data/install_sonarqube.sh")
+
+  tags = {
+    "Name" = "Sonarqube"
+  }
+}
+
+resource "aws_security_group" "jenkins_sg" {
+  name        = "Jenkins Security Group"
+  description = "Allow access to jenkins"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description = "Allow github webhook access"
+    from_port   = 0
+    to_port     = 8080
+    protocol    = -1
+    cidr_blocks = ["185.199.108.0/22"]
+  }
+
+  ingress {
+    description = "Allow vpc cidr and sonarqube access"
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  ingress {
+    description = "Allow local IP access"
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+}
+
+resource "aws_security_group" "sonarqube_sg" {
+  name        = "Sonar Security Group"
+  description = "Allow access to sonarqube"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description = "Allow local IP access"
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = ["${chomp(data.http.myip.response_body)}/32"]
+  }
+
+  ingress {
+    description = "Allow vpc cidr and jenkins access"
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+}
