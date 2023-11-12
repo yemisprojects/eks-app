@@ -34,6 +34,8 @@ data "http" "myip" {
   url = "https://api.ipify.org/"
 }
 
+data "aws_availability_zones" "available" {}
+
 resource "aws_iam_role" "ec2" {
   name = "eks-cluster-role"
 
@@ -64,7 +66,7 @@ resource "aws_iam_role_policy_attachment" "admin" {
 }
 
 resource "aws_iam_instance_profile" "ec2" {
-  name = "ec2-role"
+  name = "ec2-ssm_role"
   role = aws_iam_role.ec2.name
 
 }
@@ -75,7 +77,7 @@ module "vpc" {
 
   name                    = var.vpc_name
   cidr                    = var.vpc_cidr
-  azs                     = var.azs
+  azs                     = slice(data.aws_availability_zones.available.names, 0, 2)
   map_public_ip_on_launch = true
   public_subnets          = var.vpc_public_subnets
   enable_nat_gateway      = false
@@ -92,8 +94,8 @@ resource "aws_instance" "jenkins" {
   instance_type               = var.instance_type
   vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
   subnet_id                   = module.vpc.public_subnets[0]
-  iam_instance_profile        = aws_iam_instance_profile.ec2.arn
-  key_name                    = var.ec2_key_name ? var.ec2_key_name : null
+  iam_instance_profile        = aws_iam_instance_profile.ec2.name
+  key_name                    = var.ec2_key_name != "" ? var.ec2_key_name : null
   associate_public_ip_address = true
   user_data                   = file("./user_data/install_jenkins.sh")
 
@@ -104,12 +106,13 @@ resource "aws_instance" "jenkins" {
 
 #default user/password: admin/admin
 resource "aws_instance" "sonarqube" {
+
   ami                         = data.aws_ami.pipeline.id
   instance_type               = var.instance_type
   vpc_security_group_ids      = [aws_security_group.sonarqube_sg.id]
   subnet_id                   = module.vpc.public_subnets[1]
-  iam_instance_profile        = aws_iam_instance_profile.ec2.arn
-  key_name                    = var.ec2_key_name ? var.ec2_key_name : null
+  iam_instance_profile        = aws_iam_instance_profile.ec2.name
+  key_name                    = var.ec2_key_name != "" ? var.ec2_key_name : null
   associate_public_ip_address = true
   user_data                   = file("./user_data/install_sonarqube.sh")
 
@@ -125,9 +128,9 @@ resource "aws_security_group" "jenkins_sg" {
 
   ingress {
     description = "Allow github webhook access"
-    from_port   = 0
+    from_port   = 8080
     to_port     = 8080
-    protocol    = -1
+    protocol    = "tcp"
     cidr_blocks = ["185.199.108.0/22"]
   }
 
@@ -140,7 +143,7 @@ resource "aws_security_group" "jenkins_sg" {
   }
 
   ingress {
-    description = "Allow local IP access"
+    description = "Allow local IP ssh & http access"
     from_port   = 0
     to_port     = 0
     protocol    = -1
@@ -162,7 +165,7 @@ resource "aws_security_group" "sonarqube_sg" {
   vpc_id      = module.vpc.vpc_id
 
   ingress {
-    description = "Allow local IP access"
+    description = "Allow local ssh and http IP access"
     from_port   = 0
     to_port     = 0
     protocol    = -1
@@ -171,9 +174,9 @@ resource "aws_security_group" "sonarqube_sg" {
 
   ingress {
     description = "Allow vpc cidr and jenkins access"
-    from_port   = 0
-    to_port     = 0
-    protocol    = -1
+    from_port   = 9000
+    to_port     = 9000
+    protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
   }
 

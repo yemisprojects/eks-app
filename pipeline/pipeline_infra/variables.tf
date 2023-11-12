@@ -26,12 +26,6 @@ variable "vpc_public_subnets" {
   default     = ["172.16.1.0/24", "172.16.2.0/24"]
 }
 
-variable "azs" {
-  description = "VPC azs"
-  type        = list(string)
-  default     = ["us-east-1", "us-east-2"]
-}
-
 variable "instance_type" {
   description = "ec2 instance type"
   type        = string
