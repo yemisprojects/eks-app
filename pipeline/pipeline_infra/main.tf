@@ -37,7 +37,7 @@ data "http" "myip" {
 data "aws_availability_zones" "available" {}
 
 resource "aws_iam_role" "ec2" {
-  name = "eks-cluster-role"
+  name = "ec2-pipeline-role"
 
   assume_role_policy = <<POLICY
 {
@@ -46,7 +46,7 @@ resource "aws_iam_role" "ec2" {
     {
       "Effect": "Allow",
       "Principal": {
-        "Service": "eks.amazonaws.com"
+        "Service": "ec2.amazonaws.com"
       },
       "Action": "sts:AssumeRole"
     }
