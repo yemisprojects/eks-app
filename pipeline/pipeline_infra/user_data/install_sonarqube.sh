@@ -4,12 +4,17 @@
 ################################################################################
 apt-get update
 apt-get install docker.io -y
-usermod -aG docker $USER  
+usermod -aG docker ubuntu 
 chmod 777 /var/run/docker.sock
 
 ################################################################################
 # RUN SONARQUBE - do not use passwords in github, demo purposes only
 ################################################################################
+sysctl -w vm.max_map_count=524288
+sysctl -w fs.file-max=131072
+ulimit -n 131072
+ulimit -u 8192
+
 mkdir -p /opt/sonar && cd /opt/sonar
 apt install docker-compose -y 
 
