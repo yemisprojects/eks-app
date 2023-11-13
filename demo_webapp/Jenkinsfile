@@ -22,14 +22,16 @@ pipeline{
         stage('Git Checkout'){
             steps{
                 git branch: 'deploy_app', url: 'https://github.com/yemisprojects/eks-cicd-project.git'
-                sh 'cd demo_app'
             }
         }
 
         stage('Unit test'){
             steps{
-                sh "npm install"
-                sh "echo 'This is a placeholder for running tests'"
+                dir("${env.WORKSPACE}/demo_app"){
+                    sh "npm install"
+                    sh "echo 'This is a placeholder for running tests'"
+                }
+
             }
         }
         /*source code using static analysis */
