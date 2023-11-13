@@ -41,7 +41,7 @@ pipeline{
             }
         }
 
-/*Update to parallel stage */
+        /*Update to parallel stage */
         stage("Quality Gate"){
            steps {
                     timeout(time: 10, unit: 'MINUTES') {
@@ -112,7 +112,7 @@ pipeline{
                 message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
         }
 
-     always {
+    /* always {
         emailext attachLog: true,
             subject: "'${currentBuild.result}'",
             body: "Project: ${env.JOB_NAME}<br/>" +
@@ -135,5 +135,6 @@ pipeline{
     always{
             sh 'sh "docker rmi $registry:V${BUILD_NUMBER} && docker rmi $registry:latest" '
         }
+    }*/
     }
 }
