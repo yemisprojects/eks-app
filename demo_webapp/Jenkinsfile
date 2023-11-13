@@ -22,7 +22,7 @@ pipeline {
         DOCKER_REG_CRED = 'docker_reg_cred'
         TMDB_API_KEY = credentials('tmdb_api_key')
         /*AJ7AYe14eca3e76864yah319b92*/
-        GITHUB_CREDS = crendentials('github_token')
+        // GITHUB_CREDS = crendentials('github_token')
     }
 
     stages {
