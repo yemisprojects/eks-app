@@ -1,0 +1,189 @@
+def COLOR_MAP = [
+    'SUCCESS': 'good', 
+    'FAILURE': 'danger',
+]
+pipeline{
+    agent any
+
+    options {
+        timeout(time: 40, unit: 'MINUTES')
+        /*parallelsAlwaysFailFast()*/
+    }
+
+    tools{
+        jdk 'jdk17'
+        nodejs 'nodejs16'
+    }
+
+    environment {
+        SONAR_SCANNER_HOME = tool 'sonar_scanner'
+        DOCKER_REGISTRY = "yemisiomonijo/demoapp"
+        DOCKER_REG_CRED = 'docker_reg_cred'
+        TMDB_API_KEY = credentials('tmdb_api_key')
+        /*AJ7AYe14eca3e76864yah319b92*/
+        GITHUB_CREDS = crendentials('github_token')
+    }
+
+    stages {
+        
+        stage('cleanup workspace'){
+                steps{
+                    cleanWs(    
+                            cleanWhenNotBuilt: false,
+                            cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                            deleteDirs: true,
+                            disableDeferredWipeout: true,
+                            notFailBuild: true
+                    )
+                }
+        }
+
+        stage('Git Checkout'){
+            steps{
+                git branch: 'deploy_app', url: 'https://github.com/yemisprojects/eks-cicd-project.git'
+            }
+        }
+
+        stage('Unit test'){
+            steps{
+                dir("${env.WORKSPACE}/demo_webapp"){
+                    sh "npm install"
+                    sh "echo 'This is a placeholder for running tests'"
+                }
+
+            }
+        }
+
+        /*source code using static analysis */
+        stage("Sonarqube Analysis"){
+            steps{
+                dir("${env.WORKSPACE}/demo_webapp"){
+                        withSonarQubeEnv('sonar_server') {
+                                sh '''ls -al && ${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
+                                -Dsonar.projectCreation.mainBranchName=deploy_app  \
+                                '''
+                        }
+                }
+
+            }
+        }
+
+        /*Update to parallel stage */
+        stage("Quality Gate"){
+           steps {
+                dir("${env.WORKSPACE}/demo_webapp"){
+                        timeout(time: 10, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
+                        }
+                }
+            } 
+        }
+        /*app dependencies scan */
+        stage('OWASP Dependency Scan') {
+            steps {
+                // dir("${env.WORKSPACE}/demo_webapp"){
+                //     dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'dependency_check'
+                //     dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+
+            }
+        }
+
+        stage('Trivy FileSystem scan') {
+            steps {
+                dir("${env.WORKSPACE}/demo_webapp"){
+                    sh "trivy fs . > trivyfs.txt"
+                }
+                
+            }
+        }
+
+        stage("Docker Build & Push"){
+            steps{
+                dir("${env.WORKSPACE}/demo_webapp"){
+                    script{
+                            withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
+                                sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
+                                sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
+                                sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
+                                }
+                    }   
+                }
+
+            }
+        }
+
+        stage("Image Scan"){
+            steps{
+                dir("${env.WORKSPACE}/demo_app"){
+                    sh "trivy image $DOCKER_REGISTRY:latest > trivyimage.txt" 
+                }
+                
+            }
+        }
+
+        stage('Deploy to container'){
+            steps{
+                // dir("${env.WORKSPACE}/demo_app"){}
+                sh 'docker run -d --name testapp -p 8081:80 $DOCKER_REGISTRY:latest'
+            }
+        }
+
+        stage('Update GIT') {
+            steps {
+                dir("${env.WORKSPACE}/demo_app/kubernetes_manifests"){
+                    script {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+                            sh "git config user.email yemi@gmail.com"
+                            sh "git config user.name yemi"
+                            sh "cat deployment.yaml"
+                            sh "sed -i 's|image: ${DOCKER_REGISTRY}:.*|image: ${DOCKER_REGISTRY}:${BUILD_NUMBER}|g' deployment.yml"
+                            sh "cat deployment.yaml"
+                            sh "git add deployment.yaml"
+                            sh "git commit -m 'Done by Jenkins Job changemanifest: ${env.BUILD_NUMBER}'"
+                            sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/eks-cicd-project.git HEAD:deploy_app"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+/*Add slack integration */
+    post {
+
+        always {
+            echo 'Slack Notifications'
+            slackSend channel: '#k8s-jenkins-cicd',
+                color: COLOR_MAP[currentBuild.currentResult],
+                message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+        }
+
+    /* always {
+        emailext attachLog: true,
+            subject: "'${currentBuild.result}'",
+            body: "Project: ${env.JOB_NAME}<br/>" +
+                "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                "URL: ${env.BUILD_URL}<br/>",
+            to: 'example@gmail.com',
+            attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
+        }
+
+     always{
+        cleanWs(    
+                    cleanWhenNotBuilt: false,
+                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+                )
+     }
+
+    always{
+            sh 'sh "docker rmi $registry:V${BUILD_NUMBER} && docker rmi $registry:latest" '
+        }
+    }*/
+    }
