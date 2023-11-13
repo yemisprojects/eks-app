@@ -25,13 +25,15 @@ pipeline{
     }
     stages {
         stage('cleanup workspace'){
+                steps{
                     cleanWs(    
-                    cleanWhenNotBuilt: false,
-                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
-                    deleteDirs: true,
-                    disableDeferredWipeout: true,
-                    notFailBuild: true
-                )
+                            cleanWhenNotBuilt: false,
+                            cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                            deleteDirs: true,
+                            disableDeferredWipeout: true,
+                            notFailBuild: true
+                    )
+                }
         }
         stage('Git Checkout'){
             steps{
