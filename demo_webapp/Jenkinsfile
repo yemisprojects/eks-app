@@ -146,7 +146,7 @@ pipeline {
 
 
 /*Add slack integration */
-    post {
+    /*post {
 
         always {
             echo 'Slack Notifications'
@@ -163,7 +163,7 @@ pipeline {
                 attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
         }
 
-    }
+    }*/
 
    /*post{
         always {
