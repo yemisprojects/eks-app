@@ -37,54 +37,70 @@ pipeline{
         /*source code using static analysis */
         stage("Sonarqube Analysis"){
             steps{
-                withSonarQubeEnv('sonarqube_server') {
-                    sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp'''
+                dir("${env.WORKSPACE}/demo_app"){
+                        withSonarQubeEnv('sonarqube_server') {
+                                sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp'''
+                        }
                 }
+
             }
         }
 
         /*Update to parallel stage */
         stage("Quality Gate"){
            steps {
-                    timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
+                dir("${env.WORKSPACE}/demo_app"){
+                        timeout(time: 10, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
+                        }
                 }
             } 
         }
         /*app dependencies scan */
         stage('OWASP Dependency Scan') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'dependency_check'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                dir("${env.WORKSPACE}/demo_app"){
+                    dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'dependency_check'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+
             }
         }
 
         stage('Trivy FileSystem scan') {
             steps {
-                sh "trivy fs . > trivyfs.txt"
+                dir("${env.WORKSPACE}/demo_app"){
+                    sh "trivy fs . > trivyfs.txt"
+                }
+                
             }
         }
 
         stage("Docker Build & Push"){
             steps{
-                script{
-                   withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
-                       sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
-                       sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
-                       sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
-                    }
+                dir("${env.WORKSPACE}/demo_app"){
+                    script{
+                            withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
+                                sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
+                                sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                                sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                                }
+                    }   
                 }
+
             }
         }
 
         stage("Image Scan"){
             steps{
+                // dir("${env.WORKSPACE}/demo_app"){}
                 sh "trivy image $DOCKER_REGISTRY:latest > trivyimage.txt" 
             }
         }
 
         stage('Deploy to container'){
             steps{
+                // dir("${env.WORKSPACE}/demo_app"){}
                 sh 'docker run -d --name testapp -p 8081:80 $DOCKER_REGISTRY:latest'
             }
         }
