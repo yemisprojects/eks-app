@@ -2,7 +2,8 @@ pipeline{
     agent any
 
     options {
-        timeout(time: 40, unit: 'MINUTES'), parallelsAlwaysFailFast()
+        timeout(time: 40, unit: 'MINUTES')
+        /*parallelsAlwaysFailFast()*/
     }
 
     tools{
