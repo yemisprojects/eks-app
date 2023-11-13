@@ -38,7 +38,7 @@ pipeline{
         stage("Sonarqube Analysis"){
             steps{
                 dir("${env.WORKSPACE}/demo_app"){
-                        withSonarQubeEnv('sonar_scanner') {
+                        withSonarQubeEnv('sonar_server') {
                                 sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp'''
                         }
                 }
