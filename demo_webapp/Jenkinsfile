@@ -153,11 +153,19 @@ pipeline {
             slackSend channel: '#k8s-jenkins-cicd',
                 color: COLOR_MAP[currentBuild.currentResult],
                 message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+            
+            emailext attachLog: true,
+                subject: "'${currentBuild.result}'",
+                body: "Project: ${env.JOB_NAME}<br/>" +
+                    "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                    "URL: ${env.BUILD_URL}<br/>",
+                to: 'example@gmail.com',
+                attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
         }
 
     }
 
-    post{
+   /*post{
         always {
             emailext attachLog: true,
                 subject: "'${currentBuild.result}'",
@@ -168,19 +176,19 @@ pipeline {
                 attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
         }
 
-        // always{
-        //     cleanWs(    
-        //                 cleanWhenNotBuilt: false,
-        //                 cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
-        //                 deleteDirs: true,
-        //                 disableDeferredWipeout: true,
-        //                 notFailBuild: true
-        //             )
-        // }
+        always{
+            cleanWs(    
+                        cleanWhenNotBuilt: false,
+                        cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                        deleteDirs: true,
+                        disableDeferredWipeout: true,
+                        notFailBuild: true
+                    )
+        }
 
-        // always{
-        //             sh 'sh "docker rmi $registry:V${BUILD_NUMBER} && docker rmi $registry:latest" '
-        // }
-    }
+        always{
+                    sh 'sh "docker rmi $registry:V${BUILD_NUMBER} && docker rmi $registry:latest" '
+        }
+    }*/
     
 }
