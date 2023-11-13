@@ -40,7 +40,7 @@ pipeline{
                 dir("${env.WORKSPACE}/demo_app"){
                         withSonarQubeEnv('sonar_server') {
                                 sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
-                                -Dsonar.projectCreation.mainBranchName=deploy_app -Dsonar.projectBaseDir=demo_webapp\src '''
+                                -Dsonar.projectCreation.mainBranchName=deploy_app -Dsonar.projectBaseDir="demo_webapp\src" '''
                         }
                 }
 
