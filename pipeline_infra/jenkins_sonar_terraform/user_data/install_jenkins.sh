@@ -2,23 +2,22 @@
 ################################################################################
 # JENKINS INSTALLATION 
 ################################################################################
-apt update
-apt install openjdk-11-jdk -y
-apt install maven -y
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | tee \
-  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+apt update && apt install openjdk-11-jdk -y
+wget -O /usr/share/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
 echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
   https://pkg.jenkins.io/debian-stable binary/ | tee \
   /etc/apt/sources.list.d/jenkins.list > /dev/null
 apt-get update
-apt-get install jenkins -y
+sudo apt-get install jenkins -y
+systemctl enable jenkins && systemctl start jenkins
 
 ################################################################################
 # INSTALL DOCKER
 ################################################################################
 apt-get update
 apt-get install docker.io -y
-usermod -aG docker jenkins  #my case is ubuntu
+usermod -aG docker jenkins 
 chmod 777 /var/run/docker.sock
 
 ################################################################################
@@ -34,9 +33,10 @@ apt-get install trivy -y
 # INSTALL TERRAFORM
 ################################################################################
 apt install wget -y
-wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/hashicorp.list
-apt update && apt install terraform
+apt-get update && apt-get install -y gnupg software-properties-common
+wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+apt update
+apt-get install terraform -y
 
 ################################################################################
 # INSTALL aws cli

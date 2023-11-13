@@ -7,11 +7,11 @@ pipeline{
 
     tools{
         jdk 'jdk17'
-        nodejs 'node16'
+        nodejs 'nodejs16'
     }
 
     environment {
-        SONAR_SCANNER_HOME = tool 'sonarscanner'
+        SONAR_SCANNER_HOME = tool 'sonar_scanner'
         DOCKER_REGISTRY = "yemisiomonijo/demonetflixapp"
         DOCKER_REG_CRED = 'docker_reg_cred'
         TMDB_API_KEY = credentials('tmdb_api_key')
@@ -20,21 +20,22 @@ pipeline{
     stages {
         stage('Git Checkout'){
             steps{
-                git branch: 'build_app', url: 'https://github.com/yemisprojects/eks-cicd-project.git'
+                git branch: 'deploy_app', url: 'https://github.com/yemisprojects/eks-cicd-project.git'
                 sh 'cd demo_app'
             }
         }
-        
-        stage('Build'){
+
+        stage('Unit test'){
             steps{
                 sh "npm install"
+                sh "echo 'This is a placeholder for running tests'"
             }
         }
-
+        /*source code using static analysis */
         stage("Sonarqube Analysis"){
             steps{
-                withSonarQubeEnv('sonar-server') {
-                    sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=Netflix -Dsonar.projectKey=Netflix'''
+                withSonarQubeEnv('sonarqube_server') {
+                    sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp'''
                 }
             }
         }
@@ -43,14 +44,14 @@ pipeline{
         stage("Quality Gate"){
            steps {
                     timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true, credentialsId: 'sonar_cred' 
+                    waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
                 }
             } 
         }
-
+        /*app dependencies scan */
         stage('OWASP Dependency Scan') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'dependency_check'
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
@@ -64,7 +65,7 @@ pipeline{
         stage("Docker Build & Push"){
             steps{
                 script{
-                   withDockerRegistry(credentialsId: 'docker_reg_cred', toolName: 'docker'){   
+                   withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
                        sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
                        sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                        sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
@@ -103,13 +104,20 @@ pipeline{
 /*Add slack integration */
     post {
 
+        always {
+            echo 'Slack Notifications'
+            slackSend channel: '#k8s-jenkins-cicd',
+                color: COLOR_MAP[currentBuild.currentResult],
+                message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+        }
+
      always {
         emailext attachLog: true,
             subject: "'${currentBuild.result}'",
             body: "Project: ${env.JOB_NAME}<br/>" +
                 "Build Number: ${env.BUILD_NUMBER}<br/>" +
                 "URL: ${env.BUILD_URL}<br/>",
-            to: 'postbox.aj99@gmail.com',
+            to: 'example@gmail.com',
             attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
         }
 
