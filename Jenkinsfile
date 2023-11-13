@@ -27,72 +27,90 @@ pipeline {
 
         stage('Git Checkout'){
             steps{
-                git branch: 'deploy_app', url: 'https://github.com/yemisprojects/eks-cicd-project.git'
+                git branch: 'develop', url: 'https://github.com/yemisprojects/eks-app.git'
             }
         }
 
         stage('Unit test'){
             steps{
-                dir("${env.WORKSPACE}/demo_webapp"){
-                    sh "npm install"
-                    sh "echo 'This is a placeholder for running tests'"
-                }
+                sh "npm install"
+                sh "echo 'This is a placeholder for running tests'"
+                // dir("${env.WORKSPACE}/demo_webapp"){
+                //     sh "npm install"
+                //     sh "echo 'This is a placeholder for running tests'"
+                // }
 
             }
         }    
 
         stage("Sonarqube Analysis"){
             steps{
-                dir("${env.WORKSPACE}/demo_webapp"){
-                        withSonarQubeEnv('sonarqube_server') {
-                                sh '''ls -al && ${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
-                                -Dsonar.projectCreation.mainBranchName=deploy_app  \
-                                '''
-                        }
-                }
+                    withSonarQubeEnv('sonarqube_server') {
+                        sh '''ls -al && ${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
+                        -Dsonar.projectCreation.mainBranchName=develop  \
+                        '''
+                    }
+                // dir("${env.WORKSPACE}/demo_webapp"){
+                //         withSonarQubeEnv('sonarqube_server') {
+                //                 sh '''ls -al && ${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
+                //                 -Dsonar.projectCreation.mainBranchName=deploy_app  \
+                //                 '''
+                //         }
+                // }
 
             }
         }
 
-        // stage("Quality Gate"){
-        //    steps {
-        //         dir("${env.WORKSPACE}/demo_webapp"){
-        //                 timeout(time: 10, unit: 'MINUTES') {
-        //                     waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
-        //                 }
-        //         }
-        //     } 
-        // }
+        stage("Quality Gate"){
+           steps {
+                    timeout(time: 10, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
+                    }            
+                // dir("${env.WORKSPACE}/demo_webapp"){
+                //         timeout(time: 10, unit: 'MINUTES') {
+                //             waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
+                //         }
+                // }
+            } 
+        }
 
         stage('Trivy FileSystem scan') {
             steps {
-                dir("${env.WORKSPACE}/demo_webapp"){
-                    sh "trivy fs . | tee filesystem_scan.txt"
-                }
-                
+                sh "trivy fs . | tee filesystem_scan.txt"
+                // dir("${env.WORKSPACE}/demo_webapp"){
+                //     sh "trivy fs . | tee filesystem_scan.txt"
+                // } 
             }
         }
 
         stage("Docker Build & Push"){
             steps{
-                dir("${env.WORKSPACE}/demo_webapp"){
                     script{
                             withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
                                 sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
                                 sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
                                 sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
-                                }
-                    }   
-                }
+                            }
+                    } 
+                // dir("${env.WORKSPACE}/demo_webapp"){
+                //     script{
+                //             withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
+                //                 sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
+                //                 sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
+                //                 sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
+                //                 }
+                //     }   
+                // }
 
             }
         }
 
         stage("Image Scan"){
             steps{
-                dir("${env.WORKSPACE}/demo_webapp"){
-                    sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt" 
-                }
+                sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt" 
+                // dir("${env.WORKSPACE}/demo_webapp"){
+                //     sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt" 
+                // }
                 
             }
         }
@@ -103,9 +121,10 @@ pipeline {
         //     }
         // }
 
-        // stage('Update GIT') {
+
+        // stage('Update K8s manifest') {
         //     steps {
-        //         dir("${env.WORKSPACE}/demo_webapp/kubernetes_manifests"){
+
         //             script {
         //                     withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
         //                     sh "git config user.email yemi@gmail.com"
@@ -115,10 +134,10 @@ pipeline {
         //                     sh "cat deployment.yml"
         //                     sh "git add deployment.yml"
         //                     sh "git commit -m 'Done by Jenkins Job changemanifest: ${env.BUILD_NUMBER}'"
-        //                     sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/eks-cicd-project.git HEAD:deploy_app"
+        //                     sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/kubernetes-manifests.git HEAD:main"
         //                 }
         //             }
-        //         }
+                
         //     }
         // }
 
@@ -139,7 +158,8 @@ pipeline {
                         "Build Number: ${env.BUILD_NUMBER}<br/>" +
                         "URL: ${env.BUILD_URL}<br/>",
                 to: 'yemisiomonijo20@yahoo.com',
-                attachmentsPattern: '${env.WORKSPACE}/demo_webapp/filesystem_scan.txt,${env.WORKSPACE}/demo_webapp/image_scan.txt'
+                // attachmentsPattern: '${env.WORKSPACE}/demo_webapp/filesystem_scan.txt,${env.WORKSPACE}/demo_webapp/image_scan.txt'
+                attachmentsPattern: 'filesystem_scan.txt,image_scan.txt'
 
             sh "docker rmi ${DOCKER_REGISTRY}:${BUILD_NUMBER} && docker rmi ${DOCKER_REGISTRY}:latest"
 
