@@ -10,10 +10,13 @@ chmod 777 /var/run/docker.sock
 ################################################################################
 # RUN SONARQUBE - do not use passwords in github, demo purposes only
 ################################################################################
-sysctl -w vm.max_map_count=524288
-sysctl -w fs.file-max=131072
+
+cat <<EOT> /etc/sysctl.conf
+vm.max_map_count=524288
+fs.file-max=131072
 ulimit -n 131072
 ulimit -u 8192
+EOT
 
 mkdir -p /opt/sonar && cd /opt/sonar
 apt install docker-compose -y 
@@ -23,7 +26,7 @@ version: "3"
 services:
   sonarqube:
     image: sonarqube:9.9.2-community
-    restart: on-failure
+    restart: always
     environment:
       SONAR_JDBC_URL: jdbc:postgresql://db:5432/sonardemo
       SONAR_JDBC_USERNAME: sonardemo
@@ -38,7 +41,7 @@ services:
       - db
   db:
     image: postgres:12
-    restart: on-failure
+    restart: always
     environment:
       POSTGRES_USER: sonardemo
       POSTGRES_PASSWORD: sonardemo

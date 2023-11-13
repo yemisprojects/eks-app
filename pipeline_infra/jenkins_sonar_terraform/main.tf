@@ -104,11 +104,11 @@ resource "aws_instance" "jenkins" {
   }
 }
 
-#default user/password: admin/admin
+#default user/password: admin/admin/admin123
 resource "aws_instance" "sonarqube" {
 
   ami                         = data.aws_ami.pipeline.id
-  instance_type               = var.instance_type
+  instance_type               = var.instance_type_sonarqube
   vpc_security_group_ids      = [aws_security_group.sonarqube_sg.id]
   subnet_id                   = module.vpc.public_subnets[1]
   iam_instance_profile        = aws_iam_instance_profile.ec2.name
@@ -131,7 +131,7 @@ resource "aws_security_group" "jenkins_sg" {
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["185.199.108.0/22"]
+    cidr_blocks = ["185.199.108.0/22", "192.30.252.0/22", "140.82.112.0/20", "143.55.64.0/20"]
   }
 
   ingress {

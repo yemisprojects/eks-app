@@ -32,6 +32,13 @@ variable "instance_type" {
   default     = "t3.large"
 }
 
+variable "instance_type_sonarqube" {
+  description = "ec2 instance type"
+  type        = string
+  default     = "t3.medium"
+}
+
+
 variable "ec2_key_name" {
   type        = string
   description = "Name of ec2 key"
