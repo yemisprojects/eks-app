@@ -21,24 +21,9 @@ pipeline {
         DOCKER_REGISTRY = "yemisiomonijo/demoapp"
         DOCKER_REG_CRED = 'docker_reg_cred'
         TMDB_API_KEY = credentials('tmdb_api_key')
-        /*AJ7AYe14eca3e76864yah319b92*/
-        // GITHUB_CREDS = crendentials('github_token')
     }
 
     stages {
-
-        // stage('cleanup workspace'){
-        //         steps{
-        //             cleanWs(    
-        //                     cleanWhenNotBuilt: false,
-        //                     cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
-        //                     deleteDirs: true,
-        //                     disableDeferredWipeout: true,
-        //                     notFailBuild: true
-        //             )
-        //         }
-        // }
-
 
         stage('Git Checkout'){
             steps{
@@ -56,7 +41,6 @@ pipeline {
             }
         }    
 
-        /*source code using static analysis */
         stage("Sonarqube Analysis"){
             steps{
                 dir("${env.WORKSPACE}/demo_webapp"){
@@ -170,30 +154,5 @@ pipeline {
 
     }
 
-   /*post{
-        always {
-            emailext attachLog: true,
-                subject: "'${currentBuild.result}'",
-                body: "Project: ${env.JOB_NAME}<br/>" +
-                    "Build Number: ${env.BUILD_NUMBER}<br/>" +
-                    "URL: ${env.BUILD_URL}<br/>",
-                to: 'example@gmail.com',
-                attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
-        }
-
-        always{
-            cleanWs(    
-                        cleanWhenNotBuilt: false,
-                        cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
-                        deleteDirs: true,
-                        disableDeferredWipeout: true,
-                        notFailBuild: true
-                    )
-        }
-
-        always{
-                    sh 'sh "docker rmi $registry:V${BUILD_NUMBER} && docker rmi $registry:latest" '
-        }
-    }*/
     
 }
