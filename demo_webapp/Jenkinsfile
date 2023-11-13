@@ -155,6 +155,9 @@ pipeline {
                 message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
         }
 
+    }
+
+    post{
         always {
             emailext attachLog: true,
                 subject: "'${currentBuild.result}'",
@@ -163,21 +166,21 @@ pipeline {
                     "URL: ${env.BUILD_URL}<br/>",
                 to: 'example@gmail.com',
                 attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
-            }
-
-        always{
-            cleanWs(    
-                        cleanWhenNotBuilt: false,
-                        cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
-                        deleteDirs: true,
-                        disableDeferredWipeout: true,
-                        notFailBuild: true
-                    )
         }
 
-        always{
-                    sh 'sh "docker rmi $registry:V${BUILD_NUMBER} && docker rmi $registry:latest" '
-                }
+        // always{
+        //     cleanWs(    
+        //                 cleanWhenNotBuilt: false,
+        //                 cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+        //                 deleteDirs: true,
+        //                 disableDeferredWipeout: true,
+        //                 notFailBuild: true
+        //             )
+        // }
+
+        // always{
+        //             sh 'sh "docker rmi $registry:V${BUILD_NUMBER} && docker rmi $registry:latest" '
+        // }
     }
     
 }
