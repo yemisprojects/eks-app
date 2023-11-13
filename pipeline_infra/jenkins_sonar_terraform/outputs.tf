@@ -1,6 +1,6 @@
-output "jenkins_ip" {
+output "jenkins_2_ip" {
   description = "Jenkins EC2 public IP"
-  value       = aws_instance.jenkins.public_ip
+  value       = aws_instance.jenkins_2.public_ip
 }
 
 output "sonarqube_ip" {

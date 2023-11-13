@@ -115,8 +115,7 @@ pipeline {
 
         stage('Deploy to container'){
             steps{
-                // dir("${env.WORKSPACE}/demo_app"){}
-                sh 'docker run -d --name testapp -p 8081:80 $DOCKER_REGISTRY:latest'
+                sh 'docker run -d --name testapp${BUILD_NUMBER} -p 8081:80 $DOCKER_REGISTRY:latest'
             }
         }
 
@@ -124,17 +123,15 @@ pipeline {
             steps {
                 dir("${env.WORKSPACE}/demo_app/kubernetes_manifests"){
                     script {
-                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                             withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                             sh "git config user.email yemi@gmail.com"
                             sh "git config user.name yemi"
-                            sh "cat deployment.yaml"
+                            sh "cat deployment.yml"
                             sh "sed -i 's|image: ${DOCKER_REGISTRY}:.*|image: ${DOCKER_REGISTRY}:${BUILD_NUMBER}|g' deployment.yml"
-                            sh "cat deployment.yaml"
-                            sh "git add deployment.yaml"
+                            sh "cat deployment.yml"
+                            sh "git add deployment.yml"
                             sh "git commit -m 'Done by Jenkins Job changemanifest: ${env.BUILD_NUMBER}'"
                             sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/eks-cicd-project.git HEAD:deploy_app"
-                            }
                         }
                     }
                 }
@@ -144,9 +141,7 @@ pipeline {
 
     }
 
-
-/*Add slack integration */
-    /*post {
+    post {
 
         always {
             echo 'Slack Notifications'
@@ -162,6 +157,8 @@ pipeline {
                 to: 'yemisiomonijo20@yahoo.com',
                 attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
 
+            sh "docker rmi ${DOCKER_REGISTRY}:${BUILD_NUMBER} && docker rmi ${DOCKER_REGISTRY}:latest"
+
             cleanWs(    
                     cleanWhenNotBuilt: false,
                     cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
@@ -171,7 +168,7 @@ pipeline {
             )
         }
 
-    }*/
+    }
 
    /*post{
         always {
