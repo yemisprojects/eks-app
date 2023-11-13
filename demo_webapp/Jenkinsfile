@@ -1,3 +1,7 @@
+def COLOR_MAP = [
+    'SUCCESS': 'good', 
+    'FAILURE': 'danger',
+]
 pipeline{
     agent any
 
@@ -27,7 +31,7 @@ pipeline{
 
         stage('Unit test'){
             steps{
-                dir("${env.WORKSPACE}/demo_app"){
+                dir("${env.WORKSPACE}/demo_webapp"){
                     sh "ls -al && npm install"
                     sh "echo 'This is a placeholder for running tests'"
                 }
@@ -37,11 +41,10 @@ pipeline{
         /*source code using static analysis */
         stage("Sonarqube Analysis"){
             steps{
-                dir("${env.WORKSPACE}/demo_app"){
+                dir("${env.WORKSPACE}/demo_webapp"){
                         withSonarQubeEnv('sonar_server') {
                                 sh '''ls -al && ${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
                                 -Dsonar.projectCreation.mainBranchName=deploy_app  \
-                                -Dsonar.projectBaseDir=/var/lib/jenkins/workspace/k8s-pipeline/demo_app \
                                 '''
                         }
                 }
@@ -52,7 +55,7 @@ pipeline{
         /*Update to parallel stage */
         stage("Quality Gate"){
            steps {
-                dir("${env.WORKSPACE}/demo_app"){
+                dir("${env.WORKSPACE}/demo_webapp"){
                         timeout(time: 10, unit: 'MINUTES') {
                             waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
                         }
@@ -62,7 +65,7 @@ pipeline{
         /*app dependencies scan */
         stage('OWASP Dependency Scan') {
             steps {
-                dir("${env.WORKSPACE}/demo_app"){
+                dir("${env.WORKSPACE}/demo_webapp"){
                     dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'dependency_check'
                     dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
                 }
@@ -72,7 +75,7 @@ pipeline{
 
         stage('Trivy FileSystem scan') {
             steps {
-                dir("${env.WORKSPACE}/demo_app"){
+                dir("${env.WORKSPACE}/demo_webapp"){
                     sh "trivy fs . > trivyfs.txt"
                 }
                 
@@ -81,7 +84,7 @@ pipeline{
 
         stage("Docker Build & Push"){
             steps{
-                dir("${env.WORKSPACE}/demo_app"){
+                dir("${env.WORKSPACE}/demo_webapp"){
                     script{
                             withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
                                 sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
