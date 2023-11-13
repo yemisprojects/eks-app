@@ -28,7 +28,7 @@ pipeline{
         stage('Unit test'){
             steps{
                 dir("${env.WORKSPACE}/demo_app"){
-                    sh "npm install"
+                    sh "ls -al && npm install"
                     sh "echo 'This is a placeholder for running tests'"
                 }
 
@@ -40,7 +40,9 @@ pipeline{
                 dir("${env.WORKSPACE}/demo_app"){
                         withSonarQubeEnv('sonar_server') {
                                 sh '''ls -al && ${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
-                                -Dsonar.projectCreation.mainBranchName=deploy_app  '''
+                                -Dsonar.projectCreation.mainBranchName=deploy_app  \
+                                -Dsonar.projectBaseDir=/var/lib/jenkins/workspace/k8s-pipeline/demo_app \
+                                '''
                         }
                 }
 
