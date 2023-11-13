@@ -83,7 +83,7 @@ pipeline {
         stage('Trivy FileSystem scan') {
             steps {
                 dir("${env.WORKSPACE}/demo_webapp"){
-                    sh "trivy fs . > trivyfs.txt"
+                    sh "trivy fs . | tee trivyfs.txt"
                 }
                 
             }
@@ -107,17 +107,17 @@ pipeline {
         stage("Image Scan"){
             steps{
                 dir("${env.WORKSPACE}/demo_app"){
-                    sh "trivy image $DOCKER_REGISTRY:latest > trivyimage.txt" 
+                    sh "trivy image $DOCKER_REGISTRY:latest | tee trivyimage.txt" 
                 }
                 
             }
         }
 
-        stage('Deploy to container'){
-            steps{
-                sh 'docker run -d --name testapp${BUILD_NUMBER} -p 8081:80 $DOCKER_REGISTRY:latest'
-            }
-        }
+        // stage('Deploy to container'){
+        //     steps{
+        //         sh 'docker run -d --name testapp${BUILD_NUMBER} -p 808${BUILD_NUMBER}:80 $DOCKER_REGISTRY:latest'
+        //     }
+        // }
 
         stage('Update GIT') {
             steps {
