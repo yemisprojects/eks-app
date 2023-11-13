@@ -83,7 +83,7 @@ pipeline {
         stage('Trivy FileSystem scan') {
             steps {
                 dir("${env.WORKSPACE}/demo_webapp"){
-                    sh "trivy fs . | tee trivyfs.txt"
+                    sh "trivy fs . | tee filesystem_scan.txt"
                 }
                 
             }
@@ -106,8 +106,8 @@ pipeline {
 
         stage("Image Scan"){
             steps{
-                dir("${env.WORKSPACE}/demo_app"){
-                    sh "trivy image $DOCKER_REGISTRY:latest | tee trivyimage.txt" 
+                dir("${env.WORKSPACE}/demo_webapp"){
+                    sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt" 
                 }
                 
             }
@@ -119,24 +119,24 @@ pipeline {
         //     }
         // }
 
-        stage('Update GIT') {
-            steps {
-                dir("${env.WORKSPACE}/demo_webapp/kubernetes_manifests"){
-                    script {
-                            withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                            sh "git config user.email yemi@gmail.com"
-                            sh "git config user.name yemi"
-                            sh "cat deployment.yml"
-                            sh "sed -i 's|image: ${DOCKER_REGISTRY}:.*|image: ${DOCKER_REGISTRY}:${BUILD_NUMBER}|g' deployment.yml"
-                            sh "cat deployment.yml"
-                            sh "git add deployment.yml"
-                            sh "git commit -m 'Done by Jenkins Job changemanifest: ${env.BUILD_NUMBER}'"
-                            sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/eks-cicd-project.git HEAD:deploy_app"
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Update GIT') {
+        //     steps {
+        //         dir("${env.WORKSPACE}/demo_webapp/kubernetes_manifests"){
+        //             script {
+        //                     withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+        //                     sh "git config user.email yemi@gmail.com"
+        //                     sh "git config user.name yemi"
+        //                     sh "cat deployment.yml"
+        //                     sh "sed -i 's|image: ${DOCKER_REGISTRY}:.*|image: ${DOCKER_REGISTRY}:${BUILD_NUMBER}|g' deployment.yml"
+        //                     sh "cat deployment.yml"
+        //                     sh "git add deployment.yml"
+        //                     sh "git commit -m 'Done by Jenkins Job changemanifest: ${env.BUILD_NUMBER}'"
+        //                     sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/eks-cicd-project.git HEAD:deploy_app"
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
 
     }
@@ -155,7 +155,7 @@ pipeline {
                         "Build Number: ${env.BUILD_NUMBER}<br/>" +
                         "URL: ${env.BUILD_URL}<br/>",
                 to: 'yemisiomonijo20@yahoo.com',
-                attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
+                attachmentsPattern: '${env.WORKSPACE}/demo_webapp/filesystem_scan.txt,${env.WORKSPACE}/demo_webapp/image_scan.txt'
 
             sh "docker rmi ${DOCKER_REGISTRY}:${BUILD_NUMBER} && docker rmi ${DOCKER_REGISTRY}:latest"
 
