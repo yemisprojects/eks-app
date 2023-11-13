@@ -121,7 +121,7 @@ pipeline {
 
         stage('Update GIT') {
             steps {
-                dir("${env.WORKSPACE}/demo_app/kubernetes_manifests"){
+                dir("${env.WORKSPACE}/demo_webapp/kubernetes_manifests"){
                     script {
                             withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                             sh "git config user.email yemi@gmail.com"
@@ -151,9 +151,9 @@ pipeline {
             
             emailext attachLog: true,
                 subject: "'${currentBuild.result}'",
-                body: '''   Project: ${env.JOB_NAME}<br/>
-                            Build Number: ${env.BUILD_NUMBER}<br/>
-                            URL: ${env.BUILD_URL}<br/> "''',
+                body: "Project: ${env.JOB_NAME}<br/>" +
+                        "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                        "URL: ${env.BUILD_URL}<br/>",
                 to: 'yemisiomonijo20@yahoo.com',
                 attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
 
