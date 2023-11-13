@@ -17,12 +17,22 @@ pipeline{
 
     environment {
         SONAR_SCANNER_HOME = tool 'sonar_scanner'
-        DOCKER_REGISTRY = "yemisiomonijo/demonetflixapp"
+        DOCKER_REGISTRY = "yemisiomonijo/demoapp"
         DOCKER_REG_CRED = 'docker_reg_cred'
         TMDB_API_KEY = credentials('tmdb_api_key')
         /*AJ7AYe14eca3e76864yah319b92*/
+        GITHUB_CREDS = crendentials('github_token')
     }
     stages {
+        stage('cleanup workspace'){
+                    cleanWs(    
+                    cleanWhenNotBuilt: false,
+                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+                )
+        }
         stage('Git Checkout'){
             steps{
                 git branch: 'deploy_app', url: 'https://github.com/yemisprojects/eks-cicd-project.git'
@@ -32,7 +42,7 @@ pipeline{
         stage('Unit test'){
             steps{
                 dir("${env.WORKSPACE}/demo_webapp"){
-                    sh "ls -al && npm install"
+                    sh "npm install"
                     sh "echo 'This is a placeholder for running tests'"
                 }
 
@@ -65,9 +75,9 @@ pipeline{
         /*app dependencies scan */
         stage('OWASP Dependency Scan') {
             steps {
-                dir("${env.WORKSPACE}/demo_webapp"){
-                    dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'dependency_check'
-                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                // dir("${env.WORKSPACE}/demo_webapp"){
+                //     dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'dependency_check'
+                //     dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
                 }
 
             }
@@ -88,8 +98,8 @@ pipeline{
                     script{
                             withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
                                 sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
-                                sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
-                                sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                                sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
+                                sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
                                 }
                     }   
                 }
@@ -99,8 +109,10 @@ pipeline{
 
         stage("Image Scan"){
             steps{
-                // dir("${env.WORKSPACE}/demo_app"){}
-                sh "trivy image $DOCKER_REGISTRY:latest > trivyimage.txt" 
+                dir("${env.WORKSPACE}/demo_app"){
+                    sh "trivy image $DOCKER_REGISTRY:latest > trivyimage.txt" 
+                }
+                
             }
         }
 
@@ -111,18 +123,26 @@ pipeline{
             }
         }
 
-        // stage('Deploy to kubernets'){
-        //     steps{
-        //         script{
-        //             dir('Kubernetes') {
-        //                 withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: 'k8s', namespace: '', restrictKubeConfigAccess: false, serverUrl: '') {
-        //                         sh 'kubectl apply -f deployment.yml'
-        //                         sh 'kubectl apply -f service.yml'
-        //                 }   
-        //             }
-        //         }
-        //     }
-        // }
+        stage('Update GIT') {
+            steps {
+                dir("${env.WORKSPACE}/demo_app/kubernetes_manifests"){
+                    script {
+                        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                            withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+                            sh "git config user.email yemi@gmail.com"
+                            sh "git config user.name yemi"
+                            sh "cat deployment.yaml"
+                            sh "sed -i 's|image: ${DOCKER_REGISTRY}:.*|image: ${DOCKER_REGISTRY}:${BUILD_NUMBER}|g' deployment.yml"
+                            sh "cat deployment.yaml"
+                            sh "git add deployment.yaml"
+                            sh "git commit -m 'Done by Jenkins Job changemanifest: ${env.BUILD_NUMBER}'"
+                            sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/eks-cicd-project.git HEAD:deploy_app"
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
     }
 
@@ -161,4 +181,3 @@ pipeline{
         }
     }*/
     }
-}

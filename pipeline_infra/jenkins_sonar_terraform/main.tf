@@ -98,6 +98,10 @@ resource "aws_instance" "jenkins" {
   key_name                    = var.ec2_key_name != "" ? var.ec2_key_name : null
   associate_public_ip_address = true
   user_data                   = file("./user_data/install_jenkins.sh")
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+  }
 
   tags = {
     "Name" = "jenkins"
