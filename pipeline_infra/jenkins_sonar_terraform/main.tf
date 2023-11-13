@@ -100,11 +100,30 @@ resource "aws_instance" "jenkins" {
   user_data                   = file("./user_data/install_jenkins.sh")
   root_block_device {
     volume_size = 30
-    volume_type = "gp3"
+    volume_type = "gp2"
   }
 
   tags = {
     "Name" = "jenkins"
+  }
+}
+
+resource "aws_instance" "jenkins_2" {
+  ami                         = data.aws_ami.pipeline.id
+  instance_type               = var.instance_type
+  vpc_security_group_ids      = [aws_security_group.jenkins_sg.id]
+  subnet_id                   = module.vpc.public_subnets[0]
+  iam_instance_profile        = aws_iam_instance_profile.ec2.name
+  key_name                    = var.ec2_key_name != "" ? var.ec2_key_name : null
+  associate_public_ip_address = true
+  user_data                   = file("./user_data/install_jenkins.sh")
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+  }
+
+  tags = {
+    "Name" = "jenkins_2"
   }
 }
 
