@@ -18,6 +18,8 @@ ulimit -n 131072
 ulimit -u 8192
 EOT
 
+sysctl --system
+
 mkdir -p /opt/sonar && cd /opt/sonar
 apt install docker-compose -y 
 
