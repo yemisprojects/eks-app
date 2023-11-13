@@ -60,7 +60,7 @@ pipeline {
         stage("Sonarqube Analysis"){
             steps{
                 dir("${env.WORKSPACE}/demo_webapp"){
-                        withSonarQubeEnv('sonar_server') {
+                        withSonarQubeEnv('sonarqube_server') {
                                 sh '''ls -al && ${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
                                 -Dsonar.projectCreation.mainBranchName=deploy_app  \
                                 '''
@@ -161,6 +161,14 @@ pipeline {
                     "URL: ${env.BUILD_URL}<br/>",
                 to: 'yemisiomonijo20@yahoo.com',
                 attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
+
+            cleanWs(    
+                    cleanWhenNotBuilt: false,
+                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+            )
         }
 
     }*/
