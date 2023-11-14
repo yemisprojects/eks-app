@@ -11,9 +11,9 @@ pipeline {
         /*parallelsAlwaysFailFast()*/
     }
 
-    // tools{
-    //     jdk 'jdk17'
-    // }
+    tools{
+        jdk 'jdk17'
+    }
 
     environment {
         SONAR_SCANNER_HOME = tool 'sonar_scanner'
