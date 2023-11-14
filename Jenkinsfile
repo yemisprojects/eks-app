@@ -120,7 +120,7 @@ pipeline {
 
         stage('Trigger k8s Manifest Update') {
             environment{
-                DOCKER_TAG = V${BUILD_NUMBER}
+                DOCKER_TAG = "V${BUILD_NUMBER}"
             }
             steps {
                 script{
