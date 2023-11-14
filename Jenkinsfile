@@ -31,7 +31,7 @@ pipeline {
 
         stage('BUILD'){
             steps {
-                sh 'mvn clean install -DskipTests'
+                mvn clean install -DskipTests
             }
             post {
                 success {
@@ -85,7 +85,9 @@ pipeline {
 
         stage('FileSystem scan') {
             steps {
-                sh "trivy fs . -f json -o filesystem_scanresults.json --clear-cache"
+                sh "trivy fs . -f json -o filesystem_scanresults.json --severity LOW --exit-code 0--clear-cache"
+                sh "trivy fs . | tee filesystem_scanresults.txt"
+
             }
         }
 
@@ -103,7 +105,7 @@ pipeline {
                             //sh  "trivy image $DOCKER_REGISTRY:latest --severity CRITICAL --exit-code 1 -f json -o image_scanresults.json --clear-cache  " //FAIL PIPELINE ON CRITICAL
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             withDockerRegistry(credentialsId: 'docker_cred'){   
-                                sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                                            sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             }
                     } 
             }
@@ -115,26 +117,10 @@ pipeline {
           }
         }
 
-        stage('Update K8s manifest') {
+        stage('Trigger k8s Manifest Update') {
             steps {
-                    script {
-                            sh "rm -rf * & rm -rf .git*"
-                            sh "pwd && ls -al"
-                            // sh "cd ../. && pwd"
-                            withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                            sh "git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/kubernetes-manifests.git"
-                            sh "cd kubernetes-manifests"
-                            sh "git config user.email jenkins@gmail.com"
-                            sh "git config user.name jenkins"
-                            sh "pwd && ls -al && cat vprofile-app-deployment.yml"
-                            sh "sed -i 's|image: ${DOCKER_REGISTRY}:.*|image: ${DOCKER_REGISTRY}:V${BUILD_NUMBER}|g' vprofile-app-deployment.yml"
-                            sh "cat vprofile-app-deployment.yml"
-                            sh "git vprofile-app-deployment.yml"
-                            sh "git commit -m 'Manifest change done by Jenkins Build: ${env.BUILD_NUMBER}'"
-                            sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/kubernetes-manifests.git HEAD:main"
-                        }
-                    }
-                
+                    echo "triggering updatemanifestjob"
+                    build job: 'update-k8-manifest', parameters: [string(name: 'DOCKER_TAG', value: env.BUILD_NUMBER)]
             }
         }
 
@@ -155,7 +141,7 @@ pipeline {
                         "Build Number: ${env.BUILD_NUMBER}<br/>" +
                         "URL: ${env.BUILD_URL}<br/>",
                 to: 'yemisiomonijo20@yahoo.com',
-                attachmentsPattern: 'filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
+                attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
 
             cleanWs(    
                     cleanWhenNotBuilt: false,
