@@ -122,10 +122,10 @@ pipeline {
                             sh "pwd && ls -al"
                             // sh "cd ../. && pwd"
                             withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                            sh "git config user.email jenkins@gmail.com"
-                            sh "git config user.name jenkins"
                             sh "git clone https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/kubernetes-manifests.git"
                             sh "cd kubernetes-manifests"
+                            sh "git config user.email jenkins@gmail.com"
+                            sh "git config user.name jenkins"
                             sh "pwd && ls -al && cat vprofile-app-deployment.yml"
                             sh "sed -i 's|image: ${DOCKER_REGISTRY}:.*|image: ${DOCKER_REGISTRY}:V${BUILD_NUMBER}|g' vprofile-app-deployment.yml"
                             sh "cat vprofile-app-deployment.yml"
