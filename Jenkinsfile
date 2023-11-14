@@ -118,8 +118,9 @@ pipeline {
         stage('Update K8s manifest') {
             steps {
                     script {
+                            sh "rm -rf *"
                             sh "pwd && ls -al"
-                            sh "cd ../. && pwd"
+                            // sh "cd ../. && pwd"
                             withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                             sh "git config user.email jenkins@gmail.com"
                             sh "git config user.name jenkins"
