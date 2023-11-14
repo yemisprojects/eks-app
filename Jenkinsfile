@@ -31,7 +31,7 @@ pipeline {
 
         stage('BUILD'){
             steps {
-                mvn clean install -DskipTests
+                sh "mvn clean install -DskipTests"
             }
             post {
                 success {
@@ -99,7 +99,7 @@ pipeline {
 
         stage("Image Scan"){
             steps{
-                script{
+               // script{
                             sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
                             sh  "trivy image $DOCKER_REGISTRY:latest --severity LOW --exit-code 0 -f json -o image_scanresults.json --clear-cache  " //CRITICAL,HIGH,MEDIUM,LOW 
                             //sh  "trivy image $DOCKER_REGISTRY:latest --severity CRITICAL --exit-code 1 -f json -o image_scanresults.json --clear-cache  " //FAIL PIPELINE ON CRITICAL
@@ -107,7 +107,7 @@ pipeline {
                             withDockerRegistry(credentialsId: 'docker_cred'){   
                                             sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             }
-                    } 
+                   // } 
             }
         }
 
