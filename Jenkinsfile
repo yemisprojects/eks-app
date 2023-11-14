@@ -125,7 +125,7 @@ pipeline {
             steps {
                 script{
                     echo "triggering updatemanifestjob"
-                    build job: 'update-k8-manifest', parameters: [string(name: 'DOCKER_TAG', value: ${env.DOCKER_TAG})]
+                    build job: 'update-k8-manifest', parameters: [string(name: 'DOCKER_TAG', value: env.DOCKER_TAG)]
                 }
 
             }
