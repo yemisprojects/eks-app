@@ -107,7 +107,7 @@ pipeline {
                             Sh  "trivy -f json -o image_scanresults.json --exit-code 0 CRITICAL --severity LOW --quiet --auto-refresh $DOCKER_REGISTRY:latest" //CRITICAL,HIGH,MEDIUM,LOW 
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
-                                // sh "docker build -t $DOCKER_REGISTRY:latest ."
+                                // sh "docker build -t $DOCKER_REGISTRY:latest ." //
                                 sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             }
                     } 
