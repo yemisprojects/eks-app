@@ -110,7 +110,7 @@ pipeline {
 
         stage('Cleanup docker image') {
           steps{
-            sh "docker rmi $DOCKER_REGISTRY:latest && docker rmi $DOCKER_REGISTRY:$VBUILD_NUMBER"
+            sh "docker rmi $DOCKER_REGISTRY:latest && docker rmi $DOCKER_REGISTRY:V$BUILD_NUMBER"
           }
         }
 
@@ -150,7 +150,7 @@ pipeline {
                         "Build Number: ${env.BUILD_NUMBER}<br/>" +
                         "URL: ${env.BUILD_URL}<br/>",
                 to: 'yemisiomonijo20@yahoo.com',
-                attachmentsPattern: 'filesystem_scan.txt,image_scan.txt,image_scanresults.json,filesystem_scanresults.json'
+                attachmentsPattern: 'filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
 
             cleanWs(    
                     cleanWhenNotBuilt: false,
