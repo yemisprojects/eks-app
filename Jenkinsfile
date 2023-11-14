@@ -85,33 +85,23 @@ pipeline {
 
         stage('FileSystem scan') {
             steps {
-                sh "trivy fs . | tee filesystem_scan.txt"
-                //https://aws.amazon.com/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/
+                sh "trivy fs . -f json -o filesystem_scanresults.json --clear-cache"
             }
         }
 
         stage("Docker Build"){
             steps{
                     sh "docker build -t $DOCKER_REGISTRY:latest ."
-                    // script {                    
-                    //         withDockerRegistry(credentialsId: 'docker_cred'){ 
-                    //                             sh "docker build -t $DOCKER_REGISTRY:latest ."
-                    //         }
-                    // }
                 }
         }
 
         stage("Image Scan"){
             steps{
-                // sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"  
                 script{
                             sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
-                            sh  "trivy image $DOCKER_REGISTRY:latest --exit-code 0 -f json --clear-cache --severity LOW --quiet | tee image_scanresults.json " //CRITICAL,HIGH,MEDIUM,LOW 
-                            // sh  "trivy image $DOCKER_REGISTRY:latest --exit-code 1 -f json --clear-cache --severity CRITICAL --quiet | tee image_scanresults.json " //CRITICAL,HIGH,MEDIUM,LOW 
+                            sh  "trivy image $DOCKER_REGISTRY:latest --severity LOW --exit-code 0 -f json -o image_scanresults.json --clear-cache  " //CRITICAL,HIGH,MEDIUM,LOW 
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
-                            //toolName: 'docker',toolName: 'docker'
                             withDockerRegistry(credentialsId: 'docker_cred'){   
-                                // sh "docker build -t $DOCKER_REGISTRY:latest ." //
                                 sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             }
                     } 
@@ -120,7 +110,7 @@ pipeline {
 
         stage('Cleanup docker image') {
           steps{
-            sh "docker rmi $DOCKER_REGISTRY:latest && docker rmi $DOCKER_REGISTRY:$BUILD_NUMBER"
+            sh "docker rmi $DOCKER_REGISTRY:latest && docker rmi $DOCKER_REGISTRY:$VBUILD_NUMBER"
           }
         }
 
@@ -160,7 +150,7 @@ pipeline {
                         "Build Number: ${env.BUILD_NUMBER}<br/>" +
                         "URL: ${env.BUILD_URL}<br/>",
                 to: 'yemisiomonijo20@yahoo.com',
-                attachmentsPattern: 'filesystem_scan.txt,image_scan.txt,image_scanresults.json '
+                attachmentsPattern: 'filesystem_scan.txt,image_scan.txt,image_scanresults.json,filesystem_scanresults.json'
 
             cleanWs(    
                     cleanWhenNotBuilt: false,
