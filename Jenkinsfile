@@ -85,7 +85,7 @@ pipeline {
 
         stage('FileSystem scan') {
             steps {
-                sh "trivy fs . -f json -o filesystem_scanresults.json --severity LOW --exit-code 0--clear-cache"
+                sh "trivy fs . -f json -o filesystem_scanresults.json --severity LOW --exit-code 0 --clear-cache"
                 sh "trivy fs . | tee filesystem_scanresults.txt"
 
             }
