@@ -92,10 +92,10 @@ pipeline {
 
         stage("Docker Build"){
             steps{
-                    withDockerRegistry(credentialsId: 'docker_cred'){   
-                        sh "docker build -t $DOCKER_REGISTRY:latest ."
-                    }
-            }
+                script {                    withDockerRegistry(credentialsId: 'docker_cred'){   
+                                        sh "docker build -t $DOCKER_REGISTRY:latest ."
+                                    }}
+                            }
         }
 
         stage("Image Scan"){
