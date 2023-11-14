@@ -1,178 +1,110 @@
-def COLOR_MAP = [
-    'SUCCESS': 'good', 
-    'FAILURE': 'danger',
-]
-
 pipeline {
+
     agent any
-
-    options {
-        timeout(time: 40, unit: 'MINUTES')
-        /*parallelsAlwaysFailFast()*/
+/*
+	tools {
+        maven "maven3"
     }
-
-    tools{
-        jdk 'jdk17'
-        nodejs 'nodejs16'
-    }
-
+*/
     environment {
-        SONAR_SCANNER_HOME = tool 'sonar_scanner'
-        DOCKER_REGISTRY = "yemisiomonijo/demoapp"
-        DOCKER_REG_CRED = 'docker_reg_cred'
-        TMDB_API_KEY = credentials('tmdb_api_key')
+        registry = "imranvisualpath/vproappdock"
+        registryCredential = 'dockerhub'
     }
 
-    stages {
+    stages{
 
-        stage('Git Checkout'){
-            steps{
-                git branch: 'develop', url: 'https://github.com/yemisprojects/eks-app.git'
-            }
-        }
-
-        stage('Unit test'){
-            steps{
-                sh "npm install"
-                sh "echo 'This is a placeholder for running tests'"
-                // dir("${env.WORKSPACE}/demo_webapp"){
-                //     sh "npm install"
-                //     sh "echo 'This is a placeholder for running tests'"
-                // }
-
-            }
-        }    
-
-        stage("Sonarqube Analysis"){
-            steps{
-                    withSonarQubeEnv('sonarqube_server') {
-                        sh '''ls -al && ${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
-                        -Dsonar.projectCreation.mainBranchName=develop  \
-                        '''
-                    }
-                // dir("${env.WORKSPACE}/demo_webapp"){
-                //         withSonarQubeEnv('sonarqube_server') {
-                //                 sh '''ls -al && ${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectName=webapp -Dsonar.projectKey=webapp \
-                //                 -Dsonar.projectCreation.mainBranchName=deploy_app  \
-                //                 '''
-                //         }
-                // }
-
-            }
-        }
-
-        stage("Quality Gate"){
-           steps {
-                    timeout(time: 10, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
-                    }            
-                // dir("${env.WORKSPACE}/demo_webapp"){
-                //         timeout(time: 10, unit: 'MINUTES') {
-                //             waitForQualityGate abortPipeline: true, credentialsId: 'sonar_token' 
-                //         }
-                // }
-            } 
-        }
-
-        stage('Trivy FileSystem scan') {
+        stage('BUILD'){
             steps {
-                sh "trivy fs . | tee filesystem_scan.txt"
-                // dir("${env.WORKSPACE}/demo_webapp"){
-                //     sh "trivy fs . | tee filesystem_scan.txt"
-                // } 
+                sh 'mvn clean install -DskipTests'
+            }
+            post {
+                success {
+                    echo 'Now Archiving...'
+                    archiveArtifacts artifacts: '**/target/*.war'
+                }
             }
         }
 
-        stage("Docker Build & Push"){
+        stage('UNIT TEST'){
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('INTEGRATION TEST'){
+            steps {
+                sh 'mvn verify -DskipUnitTests'
+            }
+        }
+
+        stage ('CODE ANALYSIS WITH CHECKSTYLE'){
+            steps {
+                sh 'mvn checkstyle:checkstyle'
+            }
+            post {
+                success {
+                    echo 'Generated Analysis Result'
+                }
+            }
+        }
+
+
+        stage('Building image') {
             steps{
-                    script{
-                            withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
-                                sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
-                                sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
-                                sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
-                            }
-                    } 
-                // dir("${env.WORKSPACE}/demo_webapp"){
-                //     script{
-                //             withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
-                //                 sh "docker build --build-arg TMDB_V3_API_KEY=${TMDB_API_KEY} -t $DOCKER_REGISTRY:latest ."
-                //                 sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
-                //                 sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
-                //                 }
-                //     }   
-                // }
-
+              script {
+                dockerImage = docker.build registry + ":$BUILD_NUMBER"
+              }
             }
         }
-
-        stage("Image Scan"){
-            steps{
-                sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt" 
-                // dir("${env.WORKSPACE}/demo_webapp"){
-                //     sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt" 
-                // }
-                
+        
+        stage('Deploy Image') {
+          steps{
+            script {
+              docker.withRegistry( '', registryCredential ) {
+                dockerImage.push("$BUILD_NUMBER")
+                dockerImage.push('latest')
+              }
             }
+          }
         }
 
-        // stage('Deploy to container'){
-        //     steps{
-        //         sh 'docker run -d --name testapp${BUILD_NUMBER} -p 808${BUILD_NUMBER}:80 $DOCKER_REGISTRY:latest'
-        //     }
-        // }
+        stage('Remove Unused docker image') {
+          steps{
+            sh "docker rmi $registry:$BUILD_NUMBER"
+          }
+        }
 
+        stage('CODE ANALYSIS with SONARQUBE') {
 
-        // stage('Update K8s manifest') {
-        //     steps {
+            environment {
+                scannerHome = tool 'mysonarscanner4'
+            }
 
-        //             script {
-        //                     withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-        //                     sh "git config user.email yemi@gmail.com"
-        //                     sh "git config user.name yemi"
-        //                     sh "cat deployment.yml"
-        //                     sh "sed -i 's|image: ${DOCKER_REGISTRY}:.*|image: ${DOCKER_REGISTRY}:${BUILD_NUMBER}|g' deployment.yml"
-        //                     sh "cat deployment.yml"
-        //                     sh "git add deployment.yml"
-        //                     sh "git commit -m 'Done by Jenkins Job changemanifest: ${env.BUILD_NUMBER}'"
-        //                     sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/kubernetes-manifests.git HEAD:main"
-        //                 }
-        //             }
-                
-        //     }
-        // }
+            steps {
+                withSonarQubeEnv('sonar-pro') {
+                    sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
+                   -Dsonar.projectName=vprofile-repo \
+                   -Dsonar.projectVersion=1.0 \
+                   -Dsonar.sources=src/ \
+                   -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+                   -Dsonar.junit.reportsPath=target/surefire-reports/ \
+                   -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                   -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+                }
 
-
-    }
-
-    post {
-
-        always {
-            echo 'Slack Notifications'
-            slackSend channel: '#k8s-jenkins-cicd',
-                color: COLOR_MAP[currentBuild.currentResult],
-                message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
-            
-            emailext attachLog: true,
-                subject: "'${currentBuild.result}'",
-                body: "Project: ${env.JOB_NAME}<br/>" +
-                        "Build Number: ${env.BUILD_NUMBER}<br/>" +
-                        "URL: ${env.BUILD_URL}<br/>",
-                to: 'yemisiomonijo20@yahoo.com',
-                // attachmentsPattern: '${env.WORKSPACE}/demo_webapp/filesystem_scan.txt,${env.WORKSPACE}/demo_webapp/image_scan.txt'
-                attachmentsPattern: 'filesystem_scan.txt,image_scan.txt'
-
-            sh "docker rmi ${DOCKER_REGISTRY}:${BUILD_NUMBER} && docker rmi ${DOCKER_REGISTRY}:latest"
-
-            cleanWs(    
-                    cleanWhenNotBuilt: false,
-                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
-                    deleteDirs: true,
-                    disableDeferredWipeout: true,
-                    notFailBuild: true
-            )
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+        stage('Kubernetes Deploy') {
+	  agent { label 'KOPS' }
+            steps {
+                    sh "helm upgrade --install --force vproifle-stack helm/vprofilecharts --set appimage=${registry}:${BUILD_NUMBER} --namespace prod"
+            }
         }
 
     }
 
-    
+
 }
