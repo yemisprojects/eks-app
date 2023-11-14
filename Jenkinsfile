@@ -86,6 +86,7 @@ pipeline {
         stage('FileSystem scan') {
             steps {
                 sh "trivy fs . | tee filesystem_scan.txt"
+                //https://aws.amazon.com/blogs/security/how-to-build-ci-cd-pipeline-container-vulnerability-scanning-trivy-and-aws-security-hub/
             }
         }
 
@@ -95,7 +96,7 @@ pipeline {
                             withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
                                 sh "docker build -t $DOCKER_REGISTRY:latest ."
                                 sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
-                                sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
+                                sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             }
                     } 
             }
