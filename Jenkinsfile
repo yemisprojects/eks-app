@@ -104,6 +104,7 @@ pipeline {
                             sh  "trivy image $DOCKER_REGISTRY:latest --severity LOW --exit-code 0 -f json -o image_scanresults.json --clear-cache  " //CRITICAL,HIGH,MEDIUM,LOW 
                             //sh  "trivy image $DOCKER_REGISTRY:latest --severity CRITICAL --exit-code 1 -f json -o image_scanresults.json --clear-cache  " //FAIL PIPELINE ON CRITICAL
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                            
                             withDockerRegistry(credentialsId: 'docker_cred'){   
                                             sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             }
@@ -118,9 +119,12 @@ pipeline {
         }
 
         stage('Trigger k8s Manifest Update') {
+            environment{
+                DOCKER_TAG = V${BUILD_NUMBER}
+            }
             steps {
                     echo "triggering updatemanifestjob"
-                    build job: 'update-k8-manifest', parameters: [string(name: 'DOCKER_TAG', value: env.BUILD_NUMBER)]
+                    build job: 'update-k8-manifest', parameters: [string(name: 'DOCKER_TAG', value: ${env.DOCKER_TAG})]
             }
         }
 
