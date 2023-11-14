@@ -1,17 +1,33 @@
+def COLOR_MAP = [
+    'SUCCESS': 'good', 
+    'FAILURE': 'danger',
+]
+
 pipeline {
-
     agent any
-/*
-	tools {
-        maven "maven3"
-    }
-*/
-    environment {
-        registry = "imranvisualpath/vproappdock"
-        registryCredential = 'dockerhub'
+
+    options {
+        timeout(time: 40, unit: 'MINUTES')
+        /*parallelsAlwaysFailFast()*/
     }
 
-    stages{
+    // tools{
+    //     jdk 'jdk17'
+    // }
+
+    environment {
+        SONAR_SCANNER_HOME = tool 'sonar_scanner'
+        DOCKER_REGISTRY = "yemisiomonijo/vprofileapp"
+        DOCKER_REG_CRED = 'docker_reg_cred'
+    }
+
+    stages {
+
+        // stage('Git Checkout'){
+        //     steps{
+        //         git branch: 'develop', url: 'https://github.com/yemisprojects/eks-app.git'
+        //     }
+        // }
 
         stage('BUILD'){
             steps {
@@ -23,7 +39,7 @@ pipeline {
                     archiveArtifacts artifacts: '**/target/*.war'
                 }
             }
-        }
+        }  
 
         stage('UNIT TEST'){
             steps {
@@ -48,32 +64,6 @@ pipeline {
             }
         }
 
-
-        stage('Building image') {
-            steps{
-              script {
-                dockerImage = docker.build registry + ":$BUILD_NUMBER"
-              }
-            }
-        }
-        
-        stage('Deploy Image') {
-          steps{
-            script {
-              docker.withRegistry( '', registryCredential ) {
-                dockerImage.push("$BUILD_NUMBER")
-                dockerImage.push('latest')
-              }
-            }
-          }
-        }
-
-        stage('Remove Unused docker image') {
-          steps{
-            sh "docker rmi $registry:$BUILD_NUMBER"
-          }
-        }
-
         stage('CODE ANALYSIS with SONARQUBE') {
 
             environment {
@@ -81,9 +71,9 @@ pipeline {
             }
 
             steps {
-                withSonarQubeEnv('sonar-pro') {
-                    sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
-                   -Dsonar.projectName=vprofile-repo \
+                withSonarQubeEnv('sonarqube_server') {
+                    sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
+                   -Dsonar.projectName=vprofile-app \
                    -Dsonar.projectVersion=1.0 \
                    -Dsonar.sources=src/ \
                    -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
@@ -97,14 +87,85 @@ pipeline {
                 }
             }
         }
-        stage('Kubernetes Deploy') {
-	  agent { label 'KOPS' }
+
+        stage('FileSystem scan') {
             steps {
-                    sh "helm upgrade --install --force vproifle-stack helm/vprofilecharts --set appimage=${registry}:${BUILD_NUMBER} --namespace prod"
+                sh "trivy fs . | tee filesystem_scan.txt"
             }
+        }
+
+        stage("Docker Build & Push"){
+            steps{
+                    script{
+                            withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
+                                sh "docker build -t $DOCKER_REGISTRY:latest ."
+                                sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                                sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:${BUILD_NUMBER}"
+                            }
+                    } 
+            }
+        }
+
+        stage("Image Scan"){
+            steps{
+                sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"  
+            }
+        }
+
+        stage('Cleanup Unused docker image') {
+          steps{
+            sh "docker rmi $registry:$BUILD_NUMBER"
+          }
+        }
+
+        stage('Update K8s manifest') {
+            steps {
+
+                    script {
+                            withCredentials([usernamePassword(credentialsId: 'github_token', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+                            sh "git config user.email jenkins@gmail.com"
+                            sh "git config user.name jenkins"
+                            sh "cat vprofile-app-deployment.yml"
+                            sh "sed -i 's|image: ${DOCKER_REGISTRY}:.*|image: ${DOCKER_REGISTRY}:V${BUILD_NUMBER}|g' vprofile-app-deployment.yml"
+                            sh "cat vprofile-app-deployment.yml"
+                            sh "git vprofile-app-deployment.yml"
+                            sh "git commit -m 'Manifest change done by Jenkins Build: ${env.BUILD_NUMBER}'"
+                            sh "git push https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/${GIT_USERNAME}/kubernetes-manifests.git HEAD:main"
+                        }
+                    }
+                
+            }
+        }
+
+
+    }
+
+    post {
+
+        always {
+            echo 'Slack Notifications'
+            slackSend channel: '#k8s-jenkins-cicd',
+                color: COLOR_MAP[currentBuild.currentResult],
+                message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+            
+            emailext attachLog: true,
+                subject: "'${currentBuild.result}'",
+                body: "Project: ${env.JOB_NAME}<br/>" +
+                        "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                        "URL: ${env.BUILD_URL}<br/>",
+                to: 'yemisiomonijo20@yahoo.com',
+                attachmentsPattern: 'filesystem_scan.txt,image_scan.txt'
+
+            cleanWs(    
+                    cleanWhenNotBuilt: false,
+                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+            )
         }
 
     }
 
-
+    
 }
