@@ -92,10 +92,13 @@ pipeline {
 
         stage("Docker Build"){
             steps{
-                script {                    withDockerRegistry(credentialsId: 'docker_cred'){   
-                                        sh "docker build -t $DOCKER_REGISTRY:latest ."
-                                    }}
-                            }
+                    sh "docker build -t $DOCKER_REGISTRY:latest ."
+                    // script {                    
+                    //         withDockerRegistry(credentialsId: 'docker_cred'){ 
+                    //                             sh "docker build -t $DOCKER_REGISTRY:latest ."
+                    //         }
+                    // }
+                }
         }
 
         stage("Image Scan"){
@@ -103,11 +106,11 @@ pipeline {
                 // sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"  
                 script{
                             sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
-                            sh  "trivy -f json -o image_scanresults.json --exit-code 0 --severity LOW --quiet --auto-refresh $DOCKER_REGISTRY:latest" //CRITICAL,HIGH,MEDIUM,LOW 
-                            Sh  "trivy -f json -o image_scanresults.json --exit-code 0 CRITICAL --severity LOW --quiet --auto-refresh $DOCKER_REGISTRY:latest" //CRITICAL,HIGH,MEDIUM,LOW 
+                            sh  "trivy image $DOCKER_REGISTRY:latest --exit-code 0 -f json --clear-cache --severity LOW --quiet | tee image_scanresults.json " //CRITICAL,HIGH,MEDIUM,LOW 
+                            // sh  "trivy image $DOCKER_REGISTRY:latest --exit-code 1 -f json --clear-cache --severity CRITICAL --quiet | tee image_scanresults.json " //CRITICAL,HIGH,MEDIUM,LOW 
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
-                            
-                            withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
+                            //toolName: 'docker',toolName: 'docker'
+                            withDockerRegistry(credentialsId: 'docker_cred'){   
                                 // sh "docker build -t $DOCKER_REGISTRY:latest ." //
                                 sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             }
@@ -115,7 +118,7 @@ pipeline {
             }
         }
 
-        stage('Cleanup Unused docker image') {
+        stage('Cleanup docker image') {
           steps{
             sh "docker rmi $DOCKER_REGISTRY:latest && docker rmi $DOCKER_REGISTRY:$BUILD_NUMBER"
           }
