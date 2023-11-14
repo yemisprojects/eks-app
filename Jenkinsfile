@@ -90,27 +90,33 @@ pipeline {
             }
         }
 
-        stage("Docker Build & Push"){
+        stage("Docker Build"){
             steps{
-                    script{
+                    withDockerRegistry(credentialsId: 'docker_cred'){   
+                        sh "docker build -t $DOCKER_REGISTRY:latest ."
+                    }
+            }
+        }
+
+        stage("Image Scan"){
+            steps{
+                // sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"  
+                script{
+                            sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
+                            sh  "trivy -f json -o image_scanresults.json --exit-code 0 --severity LOW --quiet --auto-refresh $DOCKER_REGISTRY:latest" //CRITICAL,HIGH,MEDIUM,LOW 
+                            Sh  "trivy -f json -o image_scanresults.json --exit-code 0 CRITICAL --severity LOW --quiet --auto-refresh $DOCKER_REGISTRY:latest" //CRITICAL,HIGH,MEDIUM,LOW 
+                            sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             withDockerRegistry(credentialsId: 'docker_cred', toolName: 'docker'){   
-                                sh "docker build -t $DOCKER_REGISTRY:latest ."
-                                sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                                // sh "docker build -t $DOCKER_REGISTRY:latest ."
                                 sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             }
                     } 
             }
         }
 
-        stage("Image Scan"){
-            steps{
-                sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"  
-            }
-        }
-
         stage('Cleanup Unused docker image') {
           steps{
-            sh "docker rmi $registry:$BUILD_NUMBER"
+            sh "docker rmi $DOCKER_REGISTRY:latest && docker rmi $DOCKER_REGISTRY:$BUILD_NUMBER"
           }
         }
 
@@ -150,7 +156,7 @@ pipeline {
                         "Build Number: ${env.BUILD_NUMBER}<br/>" +
                         "URL: ${env.BUILD_URL}<br/>",
                 to: 'yemisiomonijo20@yahoo.com',
-                attachmentsPattern: 'filesystem_scan.txt,image_scan.txt'
+                attachmentsPattern: 'filesystem_scan.txt,image_scan.txt,image_scanresults.json '
 
             cleanWs(    
                     cleanWhenNotBuilt: false,
