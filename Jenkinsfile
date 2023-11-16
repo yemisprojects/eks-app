@@ -35,25 +35,25 @@ pipeline {
             }
         }  
 
-        // stage('OWASP Dependency scan') {
-        //     steps {
-        //         dependencyCheck additionalArguments: '--scan ./ ', odcInstallation: 'dependency_check'
-        //         // dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-        //         dependencyCheckPublisher (
-        //             // pattern: '**/build/reports/dependencyCheck/dependency-check-report.xml',
-        //             pattern: '**/dependency-check-report.xml'
-        //             failedTotalLow: 1,
-        //             failedTotalMedium: 1,
-        //             failedTotalHigh: 1,
-        //             failedTotalCritical: 1
-        //         )
-        //         if (currentBuild.result == 'UNSTABLE') {
-        //             unstable('UNSTABLE: Dependency check')
-        //         } else if (currentBuild.result == 'FAILURE') {
-        //             error('FAILED: Dependency check')
-        //         }
-        //     }
-        // }
+        stage('OWASP Dependency scan') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ ', odcInstallation: 'dependency_check'
+                // dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                dependencyCheckPublisher (
+                    // pattern: '**/build/reports/dependencyCheck/dependency-check-report.xml',
+                    pattern: '**/dependency-check-report.xml'
+                    failedTotalLow: 1,
+                    failedTotalMedium: 1,
+                    failedTotalHigh: 1,
+                    failedTotalCritical: 1
+                )
+                // if (currentBuild.result == 'UNSTABLE') {
+                //     unstable('UNSTABLE: Dependency check')
+                // } else if (currentBuild.result == 'FAILURE') {
+                //     error('FAILED: Dependency check')
+                // }
+            }
+        }
 
         stage('FileSystem scan') {
             steps {
