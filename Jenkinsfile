@@ -47,11 +47,15 @@ pipeline {
                     failedTotalHigh: 1,
                     failedTotalCritical: 1
                 )
+                script{
+
                 if (currentBuild.result == 'UNSTABLE') {
                     unstable('UNSTABLE: Dependency check')
                 } else if (currentBuild.result == 'FAILURE') {
                     error('FAILED: Dependency check')
                 }
+                }
+
             }
         }
 
