@@ -23,12 +23,6 @@ pipeline {
 
     stages {
 
-        // stage('Git Checkout'){
-        //     steps{
-        //         git branch: 'develop', url: 'https://github.com/yemisprojects/eks-app.git'
-        //     }
-        // }
-
         stage('BUILD'){
             steps {
                 sh "mvn clean install -DskipTests"
@@ -40,6 +34,34 @@ pipeline {
                 }
             }
         }  
+
+        // stage('OWASP Dependency scan') {
+        //     steps {
+        //         dependencyCheck additionalArguments: '--scan ./ ', odcInstallation: 'dependency_check'
+        //         // dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        //         dependencyCheckPublisher (
+        //             // pattern: '**/build/reports/dependencyCheck/dependency-check-report.xml',
+        //             pattern: '**/dependency-check-report.xml'
+        //             failedTotalLow: 1,
+        //             failedTotalMedium: 1,
+        //             failedTotalHigh: 1,
+        //             failedTotalCritical: 1
+        //         )
+        //         if (currentBuild.result == 'UNSTABLE') {
+        //             unstable('UNSTABLE: Dependency check')
+        //         } else if (currentBuild.result == 'FAILURE') {
+        //             error('FAILED: Dependency check')
+        //         }
+        //     }
+        // }
+
+        stage('FileSystem scan') {
+            steps {
+                sh "trivy fs . | tee filesystem_scanresults.txt"
+                sh "trivy fs . -f json -o filesystem_scanresults.json --severity LOW --exit-code 0 --clear-cache"
+                sh "trivy fs . -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 1 --clear-cache" //fail scan
+            }
+        }
 
         stage('UNIT TEST'){
             steps {
@@ -66,7 +88,17 @@ pipeline {
 
         stage('CODE ANALYSIS with SONARQUBE') {
             steps {
-                withSonarQubeEnv('sonarqube_server') {
+                // withSonarQubeEnv('sonarqube_server') {
+                //     sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
+                //    -Dsonar.projectName=vprofile-app \
+                //    -Dsonar.projectVersion=1.0 \
+                //    -Dsonar.sources=src/ \
+                //    -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+                //    -Dsonar.junit.reportsPath=target/surefire-reports/ \
+                //    -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                //    -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+                // }
+                withSonarQubeEnv('sonarcloud_server') {
                     sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
                    -Dsonar.projectName=vprofile-app \
                    -Dsonar.projectVersion=1.0 \
@@ -76,20 +108,12 @@ pipeline {
                    -Dsonar.jacoco.reportsPath=target/jacoco.exec \
                    -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
                 }
-
                 timeout(time: 10, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        stage('FileSystem scan') {
-            steps {
-                sh "trivy fs . -f json -o filesystem_scanresults.json --severity LOW --exit-code 0 --clear-cache"
-                sh "trivy fs . | tee filesystem_scanresults.txt"
-
-            }
-        }
 
         stage("Docker Build"){
             steps{
