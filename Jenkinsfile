@@ -102,6 +102,7 @@ pipeline {
                     sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
                    -Dsonar.projectName=vprofile-app \
                    -Dsonar.projectVersion=1.0 \
+                   -Dsonar.organization=yemis-projects \
                    -Dsonar.sources=src/ \
                    -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
                    -Dsonar.junit.reportsPath=target/surefire-reports/ \
