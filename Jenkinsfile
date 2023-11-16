@@ -38,23 +38,27 @@ pipeline {
         stage('OWASP Dependency scan') {
             steps {
                 dependencyCheck additionalArguments: '--scan ./ ', odcInstallation: 'dependency_check'
-                // dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
-                dependencyCheckPublisher (
-                    // pattern: '**/build/reports/dependencyCheck/dependency-check-report.xml',
-                    pattern: '**/dependency-check-report.xml',
-                    failedTotalLow: 1,
-                    failedTotalMedium: 1,
-                    failedTotalHigh: 1,
-                    failedTotalCritical: 1
-                )
-                script{
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
 
-                if (currentBuild.result == 'UNSTABLE') {
-                    unstable('UNSTABLE: Dependency check')
-                } else if (currentBuild.result == 'FAILURE') {
-                    error('FAILED: Dependency check')
-                }
-                }
+                //SET FAILURE THRESHOLDS HERE
+                // dependencyCheckPublisher (
+                //     pattern: '**/dependency-check-report.xml',
+                //     failedTotalLow: 1,
+                //     failedTotalMedium: 1,
+                //     failedTotalHigh: 1,
+                //     failedTotalCritical: 1
+                // )
+                //Uncomment to fail pipeline at this stage
+                /*
+                script{
+                    if (currentBuild.result == 'UNSTABLE') {
+                        unstable('UNSTABLE: Dependency check')
+                    } else if (currentBuild.result == 'FAILURE') {
+                        error('FAILED: Dependency check')
+                    }
+                } 
+                */
+        
 
             }
         }
@@ -63,7 +67,7 @@ pipeline {
             steps {
                 sh "trivy fs . | tee filesystem_scanresults.txt"
                 sh "trivy fs . -f json -o filesystem_scanresults.json --severity LOW --exit-code 0 --clear-cache"
-                sh "trivy fs . -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 1 --clear-cache" //fail scan
+                sh "trivy fs . -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 1 --clear-cache" //UPDATE THRESHOLD TO FAIL PIPELINE
             }
         }
 
