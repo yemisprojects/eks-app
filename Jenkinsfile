@@ -41,7 +41,7 @@ pipeline {
                 // dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
                 dependencyCheckPublisher (
                     // pattern: '**/build/reports/dependencyCheck/dependency-check-report.xml',
-                    pattern: '**/dependency-check-report.xml'
+                    pattern: '**/dependency-check-report.xml',
                     failedTotalLow: 1,
                     failedTotalMedium: 1,
                     failedTotalHigh: 1,
