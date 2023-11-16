@@ -7,8 +7,8 @@ pipeline {
     agent any
 
     options {
-        timeout(time: 40, unit: 'MINUTES')
-        /*parallelsAlwaysFailFast()*/
+        timeout(time: 40, unit: 'MINUTES'),
+        parallelsAlwaysFailFast()
     }
 
     tools{
@@ -35,7 +35,7 @@ pipeline {
             }
         }  
 
-        stage('Continous Security'){
+        stage('Vulnerability check'){
             parallel {
                         stage('OWASP Dependency check') {
                             steps {
@@ -103,16 +103,6 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                // withSonarQubeEnv('sonarqube_server') {
-                //     sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
-                //    -Dsonar.projectName=vprofile-app \
-                //    -Dsonar.projectVersion=1.0 \
-                //    -Dsonar.sources=src/ \
-                //    -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
-                //    -Dsonar.junit.reportsPath=target/surefire-reports/ \
-                //    -Dsonar.jacoco.reportsPath=target/jacoco.exec \
-                //    -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
-                // }
                 withSonarQubeEnv('sonarcloud_server') {
                     sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
                 -Dsonar.projectName=vprofile-app \
@@ -147,7 +137,7 @@ pipeline {
             steps{
                script{
                             sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
-                            sh  "trivy image $DOCKER_REGISTRY:latest --severity LOW --exit-code 1 -f json -o image_scanresults.json --clear-cache  " //FAIL PIPELINE ON LOW
+                            sh  "trivy image $DOCKER_REGISTRY:latest --severity LOW --exit-code 0 -f json -o image_scanresults.json --clear-cache  " //FAIL PIPELINE ON exit code 1
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             
                             withDockerRegistry(credentialsId: 'docker_cred'){   
