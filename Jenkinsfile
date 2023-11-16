@@ -164,25 +164,28 @@ pipeline {
             }
         }
 
-        stage('Cleanup docker image') {
-          steps{
-            sh "docker rmi $DOCKER_REGISTRY:latest && docker rmi $DOCKER_REGISTRY:V$BUILD_NUMBER"
-          }
+        stage('Update Helm repo'){
+            parallel {
+                        stage('Image tag update') {
+                            environment{
+                                DOCKER_TAG = "V${BUILD_NUMBER}"
+                            }
+                            steps {
+                                script{
+                                    echo "triggering updatemanifestjob"
+                                    build job: 'update-k8-manifest', parameters: [string(name: 'DOCKER_TAG', value: env.DOCKER_TAG)]
+                                }
+
+                            }
+                        }
+                        stage('Cleanup unused docker image') {
+                            steps{
+                                sh "docker rmi $DOCKER_REGISTRY:latest && docker rmi $DOCKER_REGISTRY:V$BUILD_NUMBER"
+                            }
+                        }
+
+                    }
         }
-
-        stage('Trigger k8s Manifest Update') {
-            environment{
-                DOCKER_TAG = "V${BUILD_NUMBER}"
-            }
-            steps {
-                script{
-                    echo "triggering updatemanifestjob"
-                    build job: 'update-k8-manifest', parameters: [string(name: 'DOCKER_TAG', value: env.DOCKER_TAG)]
-                }
-
-            }
-        }
-
 
     }
 
