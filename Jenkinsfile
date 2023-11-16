@@ -35,40 +35,45 @@ pipeline {
             }
         }  
 
-        stage('OWASP Dependency scan') {
-            steps {
-                dependencyCheck additionalArguments: '--scan ./ ', odcInstallation: 'dependency_check'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        stage('Continous Security'){
+            parallel {
+                        stage('OWASP Dependency check') {
+                            steps {
+                                dependencyCheck additionalArguments: '--scan ./ ', odcInstallation: 'dependency_check'
+                                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
 
-                //SET FAILURE THRESHOLDS HERE
-                // dependencyCheckPublisher (
-                //     pattern: '**/dependency-check-report.xml',
-                //     failedTotalLow: 1,
-                //     failedTotalMedium: 1,
-                //     failedTotalHigh: 1,
-                //     failedTotalCritical: 1
-                // )
-                //Uncomment to fail pipeline at this stage
-                /*
-                script{
-                    if (currentBuild.result == 'UNSTABLE') {
-                        unstable('UNSTABLE: Dependency check')
-                    } else if (currentBuild.result == 'FAILURE') {
-                        error('FAILED: Dependency check')
+                                //SET FAILURE THRESHOLDS HERE
+                                // dependencyCheckPublisher (
+                                //     pattern: '**/dependency-check-report.xml',
+                                //     failedTotalLow: 1,
+                                //     failedTotalMedium: 1,
+                                //     failedTotalHigh: 1,
+                                //     failedTotalCritical: 1
+                                // )
+                                //Uncomment to fail pipeline at this stage
+                                /*
+                                script{
+                                    if (currentBuild.result == 'UNSTABLE') {
+                                        unstable('UNSTABLE: Dependency check')
+                                    } else if (currentBuild.result == 'FAILURE') {
+                                        error('FAILED: Dependency check')
+                                    }
+                                } 
+                                */
+                            }
+                        }
+
+                        stage('FileSystem scan') {
+                            steps {
+                                sh "trivy fs . | tee filesystem_scanresults.txt"
+                                sh "trivy fs . -f json -o filesystem_scanresults.json --severity LOW --exit-code 0 --clear-cache"
+                                sh "trivy fs . -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 1 --clear-cache" //UPDATE THRESHOLD TO FAIL PIPELINE
+                            }
+                        }
+
                     }
-                } 
-                */
-        
-            }
         }
 
-        stage('FileSystem scan') {
-            steps {
-                sh "trivy fs . | tee filesystem_scanresults.txt"
-                sh "trivy fs . -f json -o filesystem_scanresults.json --severity LOW --exit-code 0 --clear-cache"
-                sh "trivy fs . -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 1 --clear-cache" //UPDATE THRESHOLD TO FAIL PIPELINE
-            }
-        }
 
         stage('Test'){
             parallel {
@@ -86,42 +91,47 @@ pipeline {
                     }
         }
 
-        stage ('CODE ANALYSIS WITH CHECKSTYLE'){
-            steps {
-                sh 'mvn checkstyle:checkstyle'
-            }
-            post {
-                success {
-                    echo 'Generated Analysis Result'
-                }
-            }
-        }
+        stage('Code Analysis'){
+            parallel {
+                        stage ('Mvn Checkstyle'){
+                            steps {
+                                sh 'mvn checkstyle:checkstyle'
+                            }
+                            post {
+                                success {
+                                    echo 'Generated Analysis Result'
+                                }
+                            }
+                        }
 
-        stage('CODE ANALYSIS with SONARQUBE') {
-            steps {
-                // withSonarQubeEnv('sonarqube_server') {
-                //     sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
-                //    -Dsonar.projectName=vprofile-app \
-                //    -Dsonar.projectVersion=1.0 \
-                //    -Dsonar.sources=src/ \
-                //    -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
-                //    -Dsonar.junit.reportsPath=target/surefire-reports/ \
-                //    -Dsonar.jacoco.reportsPath=target/jacoco.exec \
-                //    -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
-                // }
-                withSonarQubeEnv('sonarcloud_server') {
-                    sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
-                   -Dsonar.projectName=vprofile-app \
-                   -Dsonar.projectVersion=1.0 \
-                   -Dsonar.organization=yemis-projects \
-                   -Dsonar.sources=src/ \
-                   -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
-                   -Dsonar.junit.reportsPath=target/surefire-reports/ \
-                   -Dsonar.jacoco.reportsPath=target/jacoco.exec \
-                   -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
-                }
- 
-            }
+                        stage('SonarQube Analysis') {
+                            steps {
+                                // withSonarQubeEnv('sonarqube_server') {
+                                //     sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
+                                //    -Dsonar.projectName=vprofile-app \
+                                //    -Dsonar.projectVersion=1.0 \
+                                //    -Dsonar.sources=src/ \
+                                //    -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+                                //    -Dsonar.junit.reportsPath=target/surefire-reports/ \
+                                //    -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                                //    -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+                                // }
+                                withSonarQubeEnv('sonarcloud_server') {
+                                    sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
+                                -Dsonar.projectName=vprofile-app \
+                                -Dsonar.projectVersion=1.0 \
+                                -Dsonar.organization=yemis-projects \
+                                -Dsonar.sources=src/ \
+                                -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+                                -Dsonar.junit.reportsPath=target/surefire-reports/ \
+                                -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                                -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+                                }
+                
+                            }
+                        }
+
+                    }
         }
 
 
