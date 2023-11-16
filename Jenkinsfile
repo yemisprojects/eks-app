@@ -47,11 +47,11 @@ pipeline {
                     failedTotalHigh: 1,
                     failedTotalCritical: 1
                 )
-                // if (currentBuild.result == 'UNSTABLE') {
-                //     unstable('UNSTABLE: Dependency check')
-                // } else if (currentBuild.result == 'FAILURE') {
-                //     error('FAILED: Dependency check')
-                // }
+                if (currentBuild.result == 'UNSTABLE') {
+                    unstable('UNSTABLE: Dependency check')
+                } else if (currentBuild.result == 'FAILURE') {
+                    error('FAILED: Dependency check')
+                }
             }
         }
 
