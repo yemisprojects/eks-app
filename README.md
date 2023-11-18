@@ -124,17 +124,17 @@ mysql -u <user_name> -p accounts < accountsdb.sql
     - Goto Jenkins Dashboard → Manage Jenkins → Credentials → Select global → Add credentials
     - Add Sonarqube token
         - Obtain the token by logging into SonarCloud. Goto My Account  → Security → Enter Token Name →   Create a token → Click on Generate Token.
-        - Add the sonar token in Jenkins using the configuration below and click Create
+        - Add the sonar token in Jenkins using the configuration below and click Create. _Replace **** with sonarqube token_
         ```
              Kind: Secret text
-             Secret: ****			         _(Provide sonarqube token obtained above)_
+             Secret: ****			        
              ID: sonar_token
              Description: sonar_token
         ```
-    - Add Jenkins Slack integration token using the configuration below 
+    - Add Jenkins Slack integration token using the configuration below. _Replace **** with slack token_
     ```
             Kind: Secret text
-            Secret: ****	           _(Provide slack integration token previously obtained above)_
+            Secret: ****	          
             ID: slack_token
             Description: slack_token
     ```
