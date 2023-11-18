@@ -1,21 +1,31 @@
+def COLOR_MAP = [
+    'SUCCESS': 'good', 
+    'FAILURE': 'danger',
+]
+
 pipeline {
-
     agent any
-/*
-	tools {
-        maven "maven3"
+
+    options {
+        timeout(time: 40, unit: 'MINUTES')
+        parallelsAlwaysFailFast()
     }
-*/
+
+    tools{
+        jdk 'jdk17'
+    }
+
     environment {
-        registry = "imranvisualpath/vproappdock"
-        registryCredential = 'dockerhub'
+        SONAR_SCANNER_HOME = tool 'sonar_scanner'
+        DOCKER_REGISTRY = "yemisiomonijo/vprofileapp"
+        DOCKER_REG_CRED = 'docker_reg_cred'
     }
 
-    stages{
+    stages {
 
-        stage('BUILD'){
+        stage('Build'){
             steps {
-                sh 'mvn clean install -DskipTests'
+                sh "mvn clean install -DskipTests"
             }
             post {
                 success {
@@ -23,21 +33,64 @@ pipeline {
                     archiveArtifacts artifacts: '**/target/*.war'
                 }
             }
+        }  
+
+        stage('Vulnerability check'){
+            parallel {
+                        stage('OWASP Dependency check') {
+                            steps {
+                                dependencyCheck additionalArguments: '--scan ./ ', odcInstallation: 'dependency_check'
+                                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+
+                                //SET FAILURE THRESHOLDS HERE
+                                // dependencyCheckPublisher (
+                                //     pattern: '**/dependency-check-report.xml',
+                                //     failedTotalLow: 1,
+                                //     failedTotalMedium: 1,
+                                //     failedTotalHigh: 1,
+                                //     failedTotalCritical: 1
+                                // )
+                                //Uncomment to fail pipeline at this stage
+                                /*
+                                script{
+                                    if (currentBuild.result == 'UNSTABLE') {
+                                        unstable('UNSTABLE: Dependency check')
+                                    } else if (currentBuild.result == 'FAILURE') {
+                                        error('FAILED: Dependency check')
+                                    }
+                                } 
+                                */
+                            }
+                        }
+
+                        stage('FileSystem scan') {
+                            steps {
+                                sh "trivy fs . | tee filesystem_scanresults.txt"
+                                sh "trivy fs . -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache" //UPDATE EXIT CODE TO FAIL PIPELINE
+                            }
+                        }
+
+                    }
         }
 
-        stage('UNIT TEST'){
-            steps {
-                sh 'mvn test'
-            }
+
+        stage('Test'){
+            parallel {
+                        stage('UNIT TEST'){
+                            steps {
+                                sh 'mvn test'
+                            }
+                        }
+
+                        stage('INTEGRATION TEST'){
+                            steps {
+                                sh 'mvn verify -DskipUnitTests'
+                            }
+                        }
+                    }
         }
 
-        stage('INTEGRATION TEST'){
-            steps {
-                sh 'mvn verify -DskipUnitTests'
-            }
-        }
-
-        stage ('CODE ANALYSIS WITH CHECKSTYLE'){
+        stage ('Maven Checkstyle'){
             steps {
                 sh 'mvn checkstyle:checkstyle'
             }
@@ -48,63 +101,103 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonarcloud_server') {
+                    sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
+                -Dsonar.projectName=vprofile-app \
+                -Dsonar.projectVersion=1.0 \
+                -Dsonar.organization=yemis-projects \
+                -Dsonar.sources=src/ \
+                -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+                -Dsonar.junit.reportsPath=target/surefire-reports/ \
+                -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+                }
 
-        stage('Building image') {
+            }
+        }
+
+
+        stage('Quality gate'){
+            steps {
+                    timeout(time: 10, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
+                }
+        }
+
+        stage("Docker Build"){
             steps{
-              script {
-                dockerImage = docker.build registry + ":$BUILD_NUMBER"
-              }
-            }
-        }
-        
-        stage('Deploy Image') {
-          steps{
-            script {
-              docker.withRegistry( '', registryCredential ) {
-                dockerImage.push("$BUILD_NUMBER")
-                dockerImage.push('latest')
-              }
-            }
-          }
-        }
-
-        stage('Remove Unused docker image') {
-          steps{
-            sh "docker rmi $registry:$BUILD_NUMBER"
-          }
-        }
-
-        stage('CODE ANALYSIS with SONARQUBE') {
-
-            environment {
-                scannerHome = tool 'mysonarscanner4'
-            }
-
-            steps {
-                withSonarQubeEnv('sonar-pro') {
-                    sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
-                   -Dsonar.projectName=vprofile-repo \
-                   -Dsonar.projectVersion=1.0 \
-                   -Dsonar.sources=src/ \
-                   -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
-                   -Dsonar.junit.reportsPath=target/surefire-reports/ \
-                   -Dsonar.jacoco.reportsPath=target/jacoco.exec \
-                   -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+                    sh "docker build -t $DOCKER_REGISTRY:latest ."
                 }
+        }
 
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
+        stage("Image Scan"){
+            steps{
+               script{
+                            sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
+                            sh  "trivy image $DOCKER_REGISTRY:latest --severity LOW --exit-code 0 -f json -o image_scanresults.json --clear-cache  " //FAIL PIPELINE ON exit code 1
+                            sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                            
+                            withDockerRegistry(credentialsId: 'docker_cred'){   
+                                            sh "docker push $DOCKER_REGISTRY:latest && docker push ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
+                            }
+                   } 
             }
         }
-        stage('Kubernetes Deploy') {
-	  agent { label 'KOPS' }
-            steps {
-                    sh "helm upgrade --install --force vproifle-stack helm/vprofilecharts --set appimage=${registry}:${BUILD_NUMBER} --namespace prod"
-            }
+
+        stage('Update Helm repo'){
+            parallel {
+                        stage('Image tag update') {
+                            environment{
+                                DOCKER_TAG = "V${BUILD_NUMBER}"
+                            }
+                            steps {
+                                script{
+                                    echo "triggering updatemanifestjob"
+                                    build job: 'update-k8-manifest', parameters: [string(name: 'DOCKER_TAG', value: env.DOCKER_TAG)]
+                                }
+
+                            }
+                        }
+                        stage('Cleanup unused docker image') {
+                            steps{
+                                sh "docker rmi $DOCKER_REGISTRY:latest && docker rmi $DOCKER_REGISTRY:V$BUILD_NUMBER"
+                            }
+                        }
+
+                    }
         }
 
     }
 
+    post {
 
+        always {
+            echo 'Slack Notifications'
+            slackSend channel: '#k8s-jenkins-cicd',
+                color: COLOR_MAP[currentBuild.currentResult],
+                message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+            
+            emailext attachLog: true,
+                subject: "'${currentBuild.result}'",
+                body: "Project: ${env.JOB_NAME}<br/>" +
+                        "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                        "URL: ${env.BUILD_URL}<br/>",
+                to: 'yemisiomonijo20@yahoo.com',
+                attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
+
+            cleanWs(    
+                    cleanWhenNotBuilt: false,
+                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+            )
+        }
+
+    }
+
+    
 }
