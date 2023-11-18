@@ -89,7 +89,9 @@ mysql -u <user_name> -p accounts < accountsdb.sql
 
 #### Step 4. Setup Jenkins
 - Login to Jenkins via SSM or SSH to get the initial password with the command below: 
-   ``` cat /var/lib/jenkins/secrets/initialAdminPassword```
+   ```sh 
+   cat /var/lib/jenkins/secrets/initialAdminPassword
+   ```
 - Login to the Jenkins Web UI at http://x.x.x.x:8080/ _where x.x.x.x is jenkins public IP_ using the default username (admin)and the password obtained  above. Accept the recommendation to Install the recommended plugins. 
 - Install Jenkins Plugins
     - Goto Manage Jenkins → Plugins → Available Plugins → Select all the plugins below → Install. If a plugin is not listed, it is most likely installed
@@ -123,14 +125,18 @@ mysql -u <user_name> -p accounts < accountsdb.sql
     - Add Sonarqube token
         - Obtain the token by logging into SonarCloud. Goto My Account  → Security → Enter Token Name →   Create a token → Click on Generate Token.
         - Add the sonar token in Jenkins using the configuration below and click Create
-            - Kind: Secret text
-            - Secret: ****			         _(Provide sonarqube token obtained above)_
-            - ID: sonar_token
-            - Description: sonar_token
+        ```
+             Kind: Secret text
+             Secret: ****			         _(Provide sonarqube token obtained above)_
+             ID: sonar_token
+             Description: sonar_token
+        ```
     - Add Jenkins Slack integration token using the configuration below 
-            - Kind: Secret text
-            - Secret: ****	           _(Provide slack integration token previously obtained above)_
-            - ID: slack_token
-            - Description: slack_token
+    ```
+            Kind: Secret text
+            Secret: ****	           _(Provide slack integration token previously obtained above)_
+            ID: slack_token
+            Description: slack_token
+    ```
 
 
