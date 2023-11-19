@@ -8,7 +8,7 @@ This repository contains the source code and Jenkinsfile used to automate the Co
 
 .....insert image here
 
-Jenkins is open source and free. With numerous plugins available it provides easy integration to many third party systems. If server management is a not a major concern, Jenkins is a great choice for CI and CD to streamline your application delivery pipeline
+Jenkins is open source and free. With numerous plugins available it provides easy integration to many third party systems. If server management is a not a major concern, Jenkins is a great choice for CI and to streamline your application delivery pipeline
 
 ## Application Stack
 The application is exposed using the AWS Application Load Balancer and the stack consists of a Java application, MySQL, Rabbitmq and Memcache 
