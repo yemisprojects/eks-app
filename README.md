@@ -287,6 +287,10 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 - The `update-k8-manifest` pipeline is triggered after the `k8s-pipeline` completes. It updates the image application tag in the `kubernetes-manifests` repository
 <img alt="Helm repo Update" src="https://github.com/yemisprojects/eks-app/blob/main/images/Pipeline%202.png">
 
+- A slack notification should be recieved on the slack channel
+<img alt="Slack notification" src="">
+
+
 ### Troubleshooting
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
 Run the command below and review the logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
