@@ -4,7 +4,7 @@ This repository contains the source code and Jenkinsfile used to automate the Co
 - [eks-infra](https://github.com/yemisprojects/eks-infra) repo: contains terraform code and github workflow to automate EKS deployment
 - [kubernetes-manifests](https://github.com/yemisprojects/kubernetes-manifests) repo: contains helm charts for deployment by ArgoCD
 
-## Pipeline 
+<h2 align="center">Pipeline Stages</h2>
 
 <img alt="Jenkins pipeline" src="https://github.com/yemisprojects/eks-app/blob/main/images/architecture/Jenkins_pipeline4.png">
 
@@ -250,7 +250,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
                 attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
 ```
 
-#### Step 6. Update Helm chart 
+#### Step 6. Update helm chart repository
 
 - Fork the [kubernetes-manifest](https://github.com/yemisprojects/kubernetes-manifests) repository containing the application's helm charts
 - Replace `yemisiomonijo` in the Jenkinsfile with your dockerhub username
@@ -290,6 +290,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 - A slack notification should be recieved on the slack channel
 <img alt="Slack notification" src="https://github.com/yemisprojects/eks-app/blob/main/images/slack%20notification.png">
 
+- You should receive an email with attachment of the build log and trivy image scan results
 
 ### Troubleshooting
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
