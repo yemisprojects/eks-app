@@ -97,7 +97,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
 
 - Login to the Jenkins Web UI at http://x.x.x.x:8080/ _where x.x.x.x is jenkins public IP_ using the default username (admin)and the password obtained  above. Accept the recommendation to Install the recommended plugins. 
 
-- Install Jenkins Plugins
+- #### Install Jenkins Plugins
     - Goto Manage Jenkins → Plugins → Available Plugins → Select all the plugins below → Install. If a plugin is not listed, it is most likely installed
         - SonarQube Scanner 
         - Email Extension Plugin
@@ -110,8 +110,9 @@ mysql -u <user_name> -p accounts < accountsdb.sql
         - Docker-build-step
         - Slack Notification
         - Github Integration
+        - Blue Ocean plugin  (optional)
 
-- Install Jenkins Tools
+- #### Install Jenkins Tools
     - Goto Manage Jenkins → Tools. Install each tool using the configuration below. Click Apply and Save
         - JDK Installations
             - Name: jdk17
@@ -126,7 +127,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
             - Tick: Install automatically → Click Install from github.com
             - Version: dependency-check 6.5.1	
 
-- Add credentials to Jenkins
+- #### Add credentials to Jenkins
     - Goto Jenkins Dashboard → Manage Jenkins → Credentials → Select global → Add credentials
     - Add Sonarqube token
         - Obtain the token by logging into SonarCloud. Goto My Account  → Security → Enter Token Name → Create a token → Click on Generate Token.
@@ -168,8 +169,8 @@ mysql -u <user_name> -p accounts < accountsdb.sql
 	    ID: email_cred
         Description: email_cred
     ```
-- Update Jenkins System Configuration
-  Login to Jenkins, go to Dashboard → Manage Jenkins → System.Use the information below to add various server configurations
+- #### Update Jenkins system configuration
+  - Login to Jenkins, go to Dashboard → Manage Jenkins → System.Use the information below to add various server configurations
 
     - Under SonarQube servers and SonarQube installations, use the information below
 	    ```
@@ -198,7 +199,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
     Default channel: #k8s-jenkins-cicd   
     ```
 
-- Create two pipelines
+- #### Create two Jenkins pipelines
     ##### Pipeline No. 1
     - On Jenkins Dashboard, click New Item → Select Pipeline → Enter Item name, e.g `k8s-pipeline` and click OK
     - Under Build triggers, select GitHub hook trigger for GITScm polling
@@ -214,6 +215,9 @@ mysql -u <user_name> -p accounts < accountsdb.sql
     - On Jenkins Dashboard, click New Item → Select Pipeline → Enter this Item name, e.g `update-k8-manifest` and click OK
     - Under Pipeline. Select these options. Replace zzzzzzzz with your github name Apply and Click Save
     ```
+            Tick: This project is parameterized
+                Add Parameter -> Select String Parameter:
+                    Name: DOCKER_TAG
             Definition: Pipeline script from SCM
             SCM: Git
             Repository URL: https://github.com/zzzzzzzz/kubernetes-manifests
@@ -223,7 +227,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
 
 #### Step 5. Update Jenkinsfile 
 
-After forking the eks-app repo, make the following changes to the Jenkinsfile
+After forking this eks-app repo, make the following changes to the Jenkinsfile
 
 - Replace `yemisiomonijo` in the Jenkinsfile with your dockerhub username
 ```
@@ -269,8 +273,8 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
 ```
 - Push all changes to the repository
 
-#### Step 7. Update Helm chart 
-
+### Trigger Jenkins Pipeline
+Push
 
 
 ### Troubleshooting
