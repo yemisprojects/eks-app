@@ -1,8 +1,8 @@
 # DevSecOps CI/CD with Jenkins and ArgoCD
 
 This repository contains the source code and Jenkinsfile used to automate the Continous Integration phases of a CI/CD pipeline to EKS. Continous delivery is accomplished via ArgoCD. This repo is intended to be used with the two repositories listed below.
-- https://github.com/yemisprojects/eks-infra (contains terraform code and github workflow to automate EKS deployment)
-- https://github.com/yemisprojects/kubernetes-manifests (contains helm charts for deployment by ArgoCD)
+- [eks-infra](https://github.com/yemisprojects/eks-infra)repo: contains terraform code and github workflow to automate EKS deployment
+- [kubernetes-manifests](https://github.com/yemisprojects/kubernetes-manifests) repo: contains helm charts for deployment by ArgoCD
 
 
 ## Pipeline 
@@ -222,7 +222,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
             Script Path: Jenkinsfile
     ```
 
-#### Step 4. Update Jenkinsfile 
+#### Step 5. Update Jenkinsfile 
 
 After forking the eks-app repo, make the following changes to the Jenkinsfile
 
@@ -247,7 +247,7 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
                 attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
 ```
 
-#### Step 5. Update Helm chart 
+#### Step 6. Update Helm chart 
 
 - Fork the [kubernetes-manifest](https://github.com/yemisprojects/kubernetes-manifests) repository containing the application's helm charts
 - Replace `yemisiomonijo` in the Jenkinsfile with your dockerhub username
@@ -270,7 +270,7 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
 ```
 - Push all changes to the repository
 
-#### Step 6. Update Helm chart 
+#### Step 7. Update Helm chart 
 
 
 
