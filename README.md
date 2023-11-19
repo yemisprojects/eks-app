@@ -12,13 +12,12 @@ This repository contains the source code and Jenkinsfile used to automate the Co
 Jenkins is open source and free. With numerous plugins available it provides easy integration to many third party systems. If server management is a not a major concern, Jenkins is a great choice for CI and CD to streamline your application delivery pipeline
 
 ## Application Stack
-Java app, MySQL, Rabbitmq, Memcache 
+The application stack consists of Web layer with AWS Application Load Balancer, Java application, MySQL, Rabbitmq and Memcache 
 
 #### Application requirements
 - JDK 1.8 or later
 - Maven 3 or later
 - MySQL 5.6 or later
-
 <!--- 
 ## Technologies 
 - Spring MVC
@@ -28,17 +27,21 @@ Java app, MySQL, Rabbitmq, Memcache
 - JSP
 - MySQL
 --->
-
-#### Database
-`src/main/resources/db_backup.sql` is a mysql script to import some dummy data. To import against an existing database run this command.
-
-```sh
+#### Docker Images
+- Memchache and Rabbitmq official docker images will be used by the application in EKS
+- The DB/MySQL image has been prebuilt with some dummy data and the official MySQL docker image. 
+    - The script is located in this repo at `src/main/resources/db_backup.sql` 
+    - The image is available on dockerhub with this tag, `yemisiomonijo/vprofiledb:1`
+    - If needed, the same image was built and pushed to dockerHub with these commands
+    ```sh
+    cd Docker-files-local-test/db
+    docker build -t yemisiomonijo/vprofiledb:1 . 
+    docker push yemisiomonijo/vprofiledb:1 .
+    ```
+- The application image will be build and deployed by the Jenkins pipeline with GitOps
+<!--- 
 mysql -u <user_name> -p accounts < accountsdb.sql
-```
-
-#### 
-**Note**: The docker images memcache
-
+--->
 ## CICD setup prerequisites
 1. DockerHub account
 2. SonarCloud account
@@ -127,7 +130,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
 - Add credentials to Jenkins
     - Goto Jenkins Dashboard → Manage Jenkins → Credentials → Select global → Add credentials
     - Add Sonarqube token
-        - Obtain the token by logging into SonarCloud. Goto My Account  → Security → Enter Token Name →   Create a token → Click on Generate Token.
+        - Obtain the token by logging into SonarCloud. Goto My Account  → Security → Enter Token Name → Create a token → Click on Generate Token.
         - Add the sonar token in Jenkins using the configuration below and click Create. _Replace **** with sonarqube token_
         ```
              Kind: Secret text
@@ -181,7 +184,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
         SMTP server: smtp.gmail.com
         SMTP Port: 465
         Click Advanced
-        Credentials: select email_cred 
+        Credentials: email_cred 
         Tick: Use SSL
         Default Content Type: HTML(text/html)
         Default triggers: 
@@ -196,8 +199,9 @@ mysql -u <user_name> -p accounts < accountsdb.sql
     Default channel: #k8s-jenkins-cicd   
     ```
 
-- Create two pipeline jobs
-    - On Jenkins Dashboard, click New Item → Select Pipeline → Enter any Item name, e.g k8s-pipeline and click OK
+- Create two pipelines
+    ##### Pipeline No. 1
+    - On Jenkins Dashboard, click New Item → Select Pipeline → Enter Item name, e.g `k8s-pipeline` and click OK
     - Under Build triggers, select GitHub hook trigger for GITScm polling
     - Under Pipeline. Select these options. Replace zzzzzzzz with your github name Apply and Click Save
     ```
@@ -207,6 +211,58 @@ mysql -u <user_name> -p accounts < accountsdb.sql
             Branch Specifier: */main
             Script Path: Jenkinsfile
     ```
+    ##### Pipeline No. 2
+    - On Jenkins Dashboard, click New Item → Select Pipeline → Enter this Item name, e.g `update-k8-manifest` and click OK
+    - Under Pipeline. Select these options. Replace zzzzzzzz with your github name Apply and Click Save
+    ```
+            Definition: Pipeline script from SCM
+            SCM: Git
+            Repository URL: https://github.com/zzzzzzzz/kubernetes-manifests
+            Branch Specifier: */main
+            Script Path: Jenkinsfile
+    ```
+
+#### Step 4. Update Jenkinsfile 
+
+After forking the eks-app repo, make the following changes to the Jenkinsfile
+
+1. Replace `yemisiomonijo` in the Jenkinsfile with your dockerhub username
+```
+.......
+    environment {
+        SONAR_SCANNER_HOME = tool 'sonar_scanner'
+        DOCKER_REGISTRY = "yemisiomonijo/vprofileapp"
+        DOCKER_REG_CRED = 'docker_reg_cred'
+    }
+.......
+```
+2. Replace `dummyuser@yahoo.com` with the email address you wish to receive pipeline notifications, image scan results and build logs.
+```
+.......
+            emailext attachLog: true,
+                subject: "'${currentBuild.result}'",
+                body: "Project: ${env.JOB_NAME}<br/>" +
+                        "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                        "URL: ${env.BUILD_URL}<br/>",
+                to: 'dummyuser@yahoo.com',
+                attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
+.......
+```
+
+#### Step 4. Update Helm chart 
+
+- Fork the [kubernetes-manifest](https://github.com/yemisprojects/kubernetes-manifests) repository containing the application's helm charts
+- Replace `yemisiomonijo` in the Jenkinsfile with your dockerhub username
+```
+........
+    environment {
+        DOCKER_REGISTRY = "yemisiomonijo/vprofileapp"
+    }
+.........
+```
+
+
+
 
 
 
