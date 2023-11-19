@@ -277,12 +277,15 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 - Comit and push your changes to the main branch
 - This should trigger the `k8s-pipeline`. This is a pipeline view using blue ocean
 <img alt="Pipeline stages" src="https://github.com/yemisprojects/eks-app/blob/main/images/Pipeline%201.png">
+
 - The OWASP dependency scan results can be seen from the UI once the pipeline completes execution
 <img alt="Dependency check results" src="https://github.com/yemisprojects/eks-app/blob/main/images/Dependency%20check%20results.png">
+
 - The SonarQube Quality gate results is also shown on the Pipeline UI
 <img alt="Quality Gate" src="https://github.com/yemisprojects/eks-app/blob/main/images/Sonarcloud%20quality%20gate.png">
+
 - The `update-k8-manifest` pipeline is triggered after the `k8s-pipeline` completes. It updates the image application tag in the `kubernetes-manifests` repository
-[Helm repo Update pipeline](https://github.com/yemisprojects/eks-app/blob/main/images/Pipeline%202.png)
+<img alt="Helm repo Update" src="https://github.com/yemisprojects/eks-app/blob/main/images/Pipeline%202.png">
 
 ### Troubleshooting
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
