@@ -6,7 +6,7 @@ This repository contains the source code and Jenkinsfile used to automate the Co
 
 ## Pipeline 
 
-.....insert image here
+<img alt="Jenkins pipeline" src="https://github.com/yemisprojects/eks-app/blob/main/images/architecture/Jenkins_pipeline4.png">
 
 Jenkins is open source and free. With numerous plugins available it provides easy integration to many third party systems. If server management is a not a major concern, Jenkins is a great choice for CI and to streamline your application delivery pipeline
 
