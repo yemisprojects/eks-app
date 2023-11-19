@@ -92,7 +92,9 @@ mysql -u <user_name> -p accounts < accountsdb.sql
    ```sh 
    cat /var/lib/jenkins/secrets/initialAdminPassword
    ```
+
 - Login to the Jenkins Web UI at http://x.x.x.x:8080/ _where x.x.x.x is jenkins public IP_ using the default username (admin)and the password obtained  above. Accept the recommendation to Install the recommended plugins. 
+
 - Install Jenkins Plugins
     - Goto Manage Jenkins → Plugins → Available Plugins → Select all the plugins below → Install. If a plugin is not listed, it is most likely installed
         - SonarQube Scanner 
@@ -106,6 +108,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
         - Docker-build-step
         - Slack Notification
         - Github Integration
+
 - Install Jenkins Tools
     - Goto Manage Jenkins → Tools. Install each tool using the configuration below. Click Apply and Save
         - JDK Installations
@@ -120,6 +123,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
             - Name: dependency_check
             - Tick: Install automatically → Click Install from github.com
             - Version: dependency-check 6.5.1	
+
 - Add credentials to Jenkins
     - Goto Jenkins Dashboard → Manage Jenkins → Credentials → Select global → Add credentials
     - Add Sonarqube token
@@ -138,5 +142,73 @@ mysql -u <user_name> -p accounts < accountsdb.sql
             ID: slack_token
             Description: slack_token
     ```
+    - Add Dockerhub login credential using the configuration below. _Replace **** with docker password and userx _ 
+    ```
+            Kind: Username with password
+            Username: userx			
+            Password: **** 		          		
+            ID: docker_cred
+            Description: docker_cred
+    ```
+    - Add Github personal token. _Replace userx with your GitHub username and **** with your [Github token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with admin access_
+    ```
+            Kind: Username with password
+            Username: userx			
+            Password: **** 		          	
+            ID: github_token
+            Description: github_token
+    ```  
+    - Add email credentials. If you have a Gmail account, generate an App password using the [steps here](https://support.google.com/mail/answer/185833?hl=en). Add the email credential on Jenkins using the information below. _Replace **** with your app password_
+    ```
+        Kind: Username with password
+	    Username: userx@gmail.com	
+        Password: **** 		          		
+	    ID: email_cred
+        Description: email_cred
+    ```
+- Update Jenkins System Configuration
+  Login to Jenkins, go to Dashboard → Manage Jenkins → System.Use the information below to add various server configurations
+
+    - Under SonarQube servers and SonarQube installations, use the information below
+	    ```
+        Name: sonarcloud_server
+  	    Server URL:  https://sonarcloud.io    
+        Server authentication token: sonar_token
+        ```
+
+    -  Setup Email Notification under Extended Email Notification. Click Apply & Save
+    ```
+        SMTP server: smtp.gmail.com
+        SMTP Port: 465
+        Click Advanced
+        Credentials: select email_cred 
+        Tick: Use SSL
+        Default Content Type: HTML(text/html)
+        Default triggers: 
+            Tick: Always
+                    Failure - Any
+    ```
+
+    - Under Slack, use the information below. Select test connection after setup. _Replace xxxx with the name of your slack workspace_
+    ```
+	Workspace:  xxxx  			
+    credential: slack_token 
+    Default channel: #k8s-jenkins-cicd   
+    ```
+
+- Create two pipeline jobs
+    - On Jenkins Dashboard, click New Item → Select Pipeline → Enter any Item name, e.g k8s-pipeline and click OK
+    - Under Build triggers, select GitHub hook trigger for GITScm polling
+    - Under Pipeline. Select these options. Replace zzzzzzzz with your github name Apply and Click Save
+    ```
+            Definition: Pipeline script from SCM
+            SCM: Git
+            Repository URL: https://github.com/zzzzzzzz/eks-app
+            Branch Specifier: */main
+            Script Path: Jenkinsfile
+    ```
+
+
+
 
 
