@@ -73,7 +73,6 @@ pipeline {
                     }
         }
 
-
         stage('Test'){
             parallel {
                         stage('UNIT TEST'){
