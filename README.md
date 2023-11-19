@@ -1,9 +1,8 @@
 # DevSecOps CI/CD with Jenkins and ArgoCD
 
 This repository contains the source code and Jenkinsfile used to automate the Continous Integration phases of a CI/CD pipeline to EKS. Continous delivery is accomplished via ArgoCD. This repo is intended to be used with the two repositories listed below.
-- [eks-infra](https://github.com/yemisprojects/eks-infra)repo: contains terraform code and github workflow to automate EKS deployment
+- [eks-infra](https://github.com/yemisprojects/eks-infra) repo: contains terraform code and github workflow to automate EKS deployment
 - [kubernetes-manifests](https://github.com/yemisprojects/kubernetes-manifests) repo: contains helm charts for deployment by ArgoCD
-
 
 ## Pipeline 
 
