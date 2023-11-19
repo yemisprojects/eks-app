@@ -226,7 +226,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
 
 After forking the eks-app repo, make the following changes to the Jenkinsfile
 
-1. Replace `yemisiomonijo` in the Jenkinsfile with your dockerhub username
+- Replace `yemisiomonijo` in the Jenkinsfile with your dockerhub username
 ```
 .......
     environment {
@@ -235,7 +235,7 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
         DOCKER_REG_CRED = 'docker_reg_cred'
     }
 ```
-2. Replace `dummyuser@yahoo.com` with the email address you wish to receive pipeline notifications, image scan results and build logs.
+- Replace `dummyuser@yahoo.com` with the email address you wish to receive pipeline notifications, image scan results and build logs.
 ```
 .......
             emailext attachLog: true,
@@ -247,7 +247,7 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
                 attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
 ```
 
-#### Step 4. Update Helm chart 
+#### Step 5. Update Helm chart 
 
 - Fork the [kubernetes-manifest](https://github.com/yemisprojects/kubernetes-manifests) repository containing the application's helm charts
 - Replace `yemisiomonijo` in the Jenkinsfile with your dockerhub username
@@ -257,7 +257,7 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
         DOCKER_REGISTRY = "yemisiomonijo/vprofileapp"
     }
 ```
-- Replace `vprofile.devopsprotech.com` in the `webapp/templates/vproapp-ingress.yaml` file with a CNAME record from my domain
+- Replace `vprofile.devopsprotech.com` in the `webapp/templates/vproapp-ingress.yaml` file with a CNAME record within your domain. I have used Route53
 ```
 ......
   rules:
@@ -268,10 +268,24 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
             pathType: Prefix
             backend:
 ```
+- Push all changes to the repository
+
+#### Step 6. Update Helm chart 
 
 
 
+### Troubleshooting
+- If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
+Run the command below and review the logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
+```sh
+aws eks update-kubeconfig --region us-west-2 --name eks-poc --profile <eksadmin1>
+kubectl logs -f POD_ID -f
+```
+- To check the AWS load balancer controller logs
+```sh
+kubectl logs -f -n kube-system  -l app.kubernetes.io/name=aws-load-balancer-controller
 
+```
 
 
 
