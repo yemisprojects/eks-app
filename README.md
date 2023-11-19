@@ -288,7 +288,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 <img alt="Helm repo Update" src="https://github.com/yemisprojects/eks-app/blob/main/images/Pipeline%202.png">
 
 - A slack notification should be recieved on the slack channel
-<img alt="Slack notification" src="">
+<img alt="Slack notification" src="https://github.com/yemisprojects/eks-app/blob/main/images/slack%20notification.png">
 
 
 ### Troubleshooting
