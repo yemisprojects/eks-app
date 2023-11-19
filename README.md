@@ -274,7 +274,10 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 - Push all changes to the repository
 
 ### Trigger Jenkins Pipeline
-Push
+- Comit and push your changes to the main branch
+- This should trigger the `k8s-pipeline`
+
+- Followed by the `update-k8-manifest` which should update the image tag in the `kubernetes-manifests` repository
 
 
 ### Troubleshooting
