@@ -12,7 +12,7 @@ This repository contains the source code and Jenkinsfile used to automate the Co
 Jenkins is open source and free. With numerous plugins available it provides easy integration to many third party systems. If server management is a not a major concern, Jenkins is a great choice for CI and CD to streamline your application delivery pipeline
 
 ## Application Stack
-The application stack consists of Web layer with AWS Application Load Balancer, Java application, MySQL, Rabbitmq and Memcache 
+The application is exposed using the AWS Application Load Balancer and the stack consists of a Java application, MySQL, Rabbitmq and Memcache 
 
 #### Application requirements
 - JDK 1.8 or later
@@ -38,7 +38,7 @@ The application stack consists of Web layer with AWS Application Load Balancer, 
     docker build -t yemisiomonijo/vprofiledb:1 . 
     docker push yemisiomonijo/vprofiledb:1 .
     ```
-- The application image will be build and deployed by the Jenkins pipeline with GitOps
+- The application image will be built and deployed by the Jenkins pipeline with GitOps
 <!--- 
 mysql -u <user_name> -p accounts < accountsdb.sql
 --->
@@ -234,7 +234,6 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
         DOCKER_REGISTRY = "yemisiomonijo/vprofileapp"
         DOCKER_REG_CRED = 'docker_reg_cred'
     }
-.......
 ```
 2. Replace `dummyuser@yahoo.com` with the email address you wish to receive pipeline notifications, image scan results and build logs.
 ```
@@ -246,7 +245,6 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
                         "URL: ${env.BUILD_URL}<br/>",
                 to: 'dummyuser@yahoo.com',
                 attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
-.......
 ```
 
 #### Step 4. Update Helm chart 
@@ -258,7 +256,17 @@ After forking the eks-app repo, make the following changes to the Jenkinsfile
     environment {
         DOCKER_REGISTRY = "yemisiomonijo/vprofileapp"
     }
-.........
+```
+- Replace `vprofile.devopsprotech.com` in the `webapp/templates/vproapp-ingress.yaml` file with a CNAME record from my domain
+```
+......
+  rules:
+    - host: vprofile.devopsprotech.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
 ```
 
 
