@@ -92,8 +92,8 @@ pipeline {
 
                         stage('FileSystem scan') {
                             steps {
-                                sh "trivy fs . | tee filesystem_scanresults.txt"
-                                sh "trivy fs . -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache" //UPDATE EXIT CODE TO FAIL PIPELINE
+                                sh "trivy fs --security-checks vuln,config . | tee filesystem_scanresults.txt"
+                                sh "trivy fs --security-checks vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
                             }
                         }
 
@@ -182,16 +182,16 @@ pipeline {
                 body: "Project: ${env.JOB_NAME}<br/>" +
                         "Build Number: ${env.BUILD_NUMBER}<br/>" +
                         "URL: ${env.BUILD_URL}<br/>",
-                to: 'dummyuser@yahoo.com',
+                to: 'yemisiomonijo20@yahoo.com',
                 attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
 
-            cleanWs(    
-                    cleanWhenNotBuilt: false,
-                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
-                    deleteDirs: true,
-                    disableDeferredWipeout: true,
-                    notFailBuild: true
-            )
+            // cleanWs(    
+            //         cleanWhenNotBuilt: false,
+            //         cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+            //         deleteDirs: true,
+            //         disableDeferredWipeout: true,
+            //         notFailBuild: true
+            // )
         }
 
     }
