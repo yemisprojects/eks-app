@@ -93,7 +93,7 @@ pipeline {
                                     reportTitles: 'Trivy Scan'
                                 ]
                                 sh "trivy fs --scanners vuln,config . | tee filesystem_scanresults.txt"
-                                sh "trivy fs --scanners vuln,config --severity MEDIUM,HIGH, CRITICAL --exit-code 1 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
+                                sh "trivy fs --scanners vuln,config --severity MEDIUM,HIGH,CRITICAL --exit-code 1 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
                                 sh "bash check-trivy-scan-status.sh"
                             }
                         }
