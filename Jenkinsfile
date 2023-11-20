@@ -81,9 +81,9 @@ pipeline {
 
                         stage('FileSystem scan') {
                             steps {
-                                sh "trivy fs --scanners vuln,config --exit-code 1 . | tee filesystem_scanresults.txt"
-                                sh "trivy fs --scanners vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 1 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
-                                sh "sudo bash trivy-verify-status.sh"
+                                sh "trivy fs --scanners vuln,config . | tee filesystem_scanresults.txt"
+                                sh "trivy fs --scanners vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
+                                sh "sudo bash check-trivy-scan-status.sh"
                             
                             }
                         }
@@ -126,7 +126,8 @@ pipeline {
             steps{
                script{
                             sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
-                            sh  "trivy image $DOCKER_REGISTRY:latest --severity LOW --exit-code 0 -f json -o image_scanresults.json --clear-cache  " //FAIL PIPELINE ON exit code 1
+                            sh  "trivy image $DOCKER_REGISTRY:latest --severity HIGH,CRITICAL --exit-code 1 -f json -o image_scanresults.json --clear-cache" //UPDATE EXIT CODE TO FAIL PIPELINE
+                            sh "sudo bash check-trivy-scan-status.sh" //FAIL PIPELINE ON exit code 1
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             
                             withDockerRegistry(credentialsId: 'docker_cred'){   
