@@ -35,6 +35,33 @@ pipeline {
             }
         }  
 
+        stage('Test'){
+            parallel {
+                        stage('UNIT TEST'){
+                            steps {
+                                sh 'mvn test'
+                            }
+                        }
+
+                        stage('INTEGRATION TEST'){
+                            steps {
+                                sh 'mvn verify -DskipUnitTests'
+                            }
+                        }
+                    }
+        }
+
+        stage ('Maven Checkstyle'){
+            steps {
+                sh 'mvn checkstyle:checkstyle'
+            }
+            post {
+                success {
+                    echo 'Generated Analysis Result'
+                }
+            }
+        }
+
         stage('Vulnerability check'){
             parallel {
                         stage('OWASP Dependency check') {
@@ -73,33 +100,6 @@ pipeline {
                     }
         }
 
-        stage('Test'){
-            parallel {
-                        stage('UNIT TEST'){
-                            steps {
-                                sh 'mvn test'
-                            }
-                        }
-
-                        stage('INTEGRATION TEST'){
-                            steps {
-                                sh 'mvn verify -DskipUnitTests'
-                            }
-                        }
-                    }
-        }
-
-        stage ('Maven Checkstyle'){
-            steps {
-                sh 'mvn checkstyle:checkstyle'
-            }
-            post {
-                success {
-                    echo 'Generated Analysis Result'
-                }
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonarcloud_server') {
@@ -113,10 +113,8 @@ pipeline {
                 -Dsonar.jacoco.reportsPath=target/jacoco.exec \
                 -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
                 }
-
             }
         }
-
 
         stage('Quality gate'){
             steps {
