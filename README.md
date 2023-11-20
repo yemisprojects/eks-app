@@ -251,7 +251,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
                         "Build Number: ${env.BUILD_NUMBER}<br/>" +
                         "URL: ${env.BUILD_URL}<br/>",
                 to: 'dummyuser@yahoo.com',
-                attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
+                attachmentsPattern: 'filesystem_scanresults.txt,image_scan.txt'
 ```
 
 #### Step 6. Update helm chart repository
