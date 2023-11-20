@@ -51,16 +51,16 @@ pipeline {
                     }
         }
 
-        stage ('Maven Checkstyle'){
-            steps {
-                sh 'mvn checkstyle:checkstyle'
-            }
-            post {
-                success {
-                    echo 'Generated Analysis Result'
-                }
-            }
-        }
+        // stage ('Maven Checkstyle'){
+        //     steps {
+        //         sh 'mvn checkstyle:checkstyle'
+        //     }
+        //     post {
+        //         success {
+        //             echo 'Generated Analysis Result'
+        //         }
+        //     }
+        // }
 
         stage('Vulnerability check'){
             parallel {
@@ -102,6 +102,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
+                sh 'mvn checkstyle:checkstyle'
                 withSonarQubeEnv('sonarcloud_server') {
                     sh '''${SONAR_SCANNER_HOME}/bin/sonar-scanner -Dsonar.projectKey=vprofile-app \
                 -Dsonar.projectName=vprofile-app \
