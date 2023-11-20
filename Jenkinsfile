@@ -86,7 +86,7 @@ pipeline {
                                 script{
                                         //Trivy scan result processing
                                         exit_code=$?
-                                        echo "Exit Code : $exit_code"
+                                        sh '''echo "Exit Code : $exit_code"'''
 
                                         //Check scan results
                                         if [[ "${exit_code}" == 1 ]]; then
