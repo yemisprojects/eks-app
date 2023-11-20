@@ -186,13 +186,13 @@ pipeline {
                 to: 'yemisiomonijo20@yahoo.com',
                 attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
 
-            // cleanWs(    
-            //         cleanWhenNotBuilt: false,
-            //         cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
-            //         deleteDirs: true,
-            //         disableDeferredWipeout: true,
-            //         notFailBuild: true
-            // )
+            cleanWs(    
+                    cleanWhenNotBuilt: false,
+                    cleanWhenAborted: true, cleanWhenFailure: true, cleanWhenSuccess: true, cleanWhenUnstable: true,
+                    deleteDirs: true,
+                    disableDeferredWipeout: true,
+                    notFailBuild: true
+            )
         }
 
     }
