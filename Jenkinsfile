@@ -126,7 +126,7 @@ pipeline {
             steps{
                script{
                             sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
-                            sh "trivy image $DOCKER_REGISTRY:latest --severity HIGH,CRITICAL --exit-code 1 -f json -o image_scanresults.json --clear-cache" //UPDATE EXIT CODE TO FAIL PIPELINE
+                            sh "trivy image $DOCKER_REGISTRY:latest --severity LOW,MEDIUM --exit-code 1 -f json -o image_scanresults.json --clear-cache" //UPDATE EXIT CODE TO FAIL PIPELINE
                             sh "bash check-trivy-scan-status.sh" //FAIL PIPELINE ON exit code 1
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             
