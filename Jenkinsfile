@@ -51,17 +51,6 @@ pipeline {
                     }
         }
 
-        // stage ('Maven Checkstyle'){
-        //     steps {
-        //         sh 'mvn checkstyle:checkstyle'
-        //     }
-        //     post {
-        //         success {
-        //             echo 'Generated Analysis Result'
-        //         }
-        //     }
-        // }
-
         stage('Vulnerability check'){
             parallel {
                         stage('OWASP Dependency check') {
@@ -93,7 +82,15 @@ pipeline {
                         stage('FileSystem scan') {
                             steps {
                                 sh "trivy fs --scanners vuln,config --exit-code 1 . | tee filesystem_scanresults.txt"
-                                sh "trivy fs --security-checks vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
+                                sh "trivy fs --scanners vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
+                                script{
+                                    if (currentBuild.result == 'UNSTABLE') {
+                                        unstable('UNSTABLE: FileSystem scan')
+                                    } else if (currentBuild.result == 'FAILURE') {
+                                        error('FAILED: FileSystem scan')
+                                    }
+                                } 
+                            
                             }
                         }
 
