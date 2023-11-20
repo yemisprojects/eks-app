@@ -84,7 +84,8 @@ pipeline {
                                 // sh "trivy fs --scanners vuln,config . | tee filesystem_scanresults.txt"
                                 // sh "trivy fs --scanners vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
                                 // sh "bash check-trivy-scan-status.sh"
-                                sh 'trivy filesystem --scanners vuln,config --format template --template "@html.tpl" -o trivy-scan.html .'
+                                sh 'mkdir -p reports'
+                                sh 'trivy filesystem --scanners vuln,config --format template --template "@html.tpl" -o reports/trivy-scan.html .'
                                 publishHTML target : [
                                     allowMissing: true,
                                     alwaysLinkToLastBuild: true,

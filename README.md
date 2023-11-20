@@ -8,7 +8,7 @@ This repository contains the source code and Jenkinsfile used to automate the Co
 
 <img alt="Jenkins pipeline" src="https://github.com/yemisprojects/eks-app/blob/main/images/Final_pipeline.png">
 
-[Jenkins](https://www.jenkins.io) is open source and free. With numerous plugins available it provides easy integration to many third party systems. If server management is a not a major concern, Jenkins is a great choice for CI and to streamline your application delivery pipeline.
+[Jenkins](https://www.jenkins.io) is open source and free. With numerous plugins available it provides easy integration to many third party systems. If server management is a not a major concern, Jenkins is a great choice for CI.
 [Checkstyle](https://checkstyle.sourceforge.io) is a development tool to help programmers write Java code that adheres to a coding standard. It automates the process of checking Java code to spare humans of this boring (but important) task. This makes it ideal for projects that want to enforce a coding standard.
 
 
@@ -113,6 +113,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
         - Docker-build-step
         - Slack Notification
         - Github Integration
+        - HTML Publisher plugin
         - Blue Ocean plugin  (optional)
 
 - #### Install Jenkins Tools
