@@ -332,5 +332,7 @@ kubectl logs -f -n kube-system  -l app.kubernetes.io/name=aws-load-balancer-cont
 
 ## Improvements
 
-OWASP Zap (DAST) can be implemented to improved the security posture of the application by finding security vulnerabilities in your running web applications.
+- OWASP Zap (DAST) can be implemented to improved the security posture of the application by finding security vulnerabilities in your running web applications.
+- ECR for continous image scanning
+
 
