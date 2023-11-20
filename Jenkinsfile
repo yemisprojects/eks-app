@@ -82,13 +82,19 @@ pipeline {
                         stage('FileSystem scan') {
                             steps {
                                 sh "trivy fs --scanners vuln,config --exit-code 1 . | tee filesystem_scanresults.txt"
-                                sh "trivy fs --scanners vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
+                                sh "trivy fs --scanners vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 1 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
                                 script{
-                                    if (currentBuild.result == 'UNSTABLE') {
-                                        unstable('UNSTABLE: FileSystem scan')
-                                    } else if (currentBuild.result == 'FAILURE') {
-                                        error('FAILED: FileSystem scan')
-                                    }
+                                        # Trivy scan result processing
+                                        exit_code=$?
+                                        echo "Exit Code : $exit_code"
+
+                                        # Check scan results
+                                        if [[ "${exit_code}" == 1 ]]; then
+                                            echo "Image scanning failed. Vulnerabilities found"
+                                            exit 1;
+                                        else
+                                            echo "Image scanning passed. No CRITICAL vulnerabilities found"
+                                        fi;
                                 } 
                             
                             }
