@@ -92,7 +92,7 @@ pipeline {
 
                         stage('FileSystem scan') {
                             steps {
-                                sh "trivy fs --security-checks vuln,config . | tee filesystem_scanresults.txt"
+                                sh "trivy fs --scanners vuln,config --exit-code 1 . | tee filesystem_scanresults.txt"
                                 sh "trivy fs --security-checks vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
                             }
                         }
