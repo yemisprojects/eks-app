@@ -81,9 +81,6 @@ pipeline {
 
                         stage('FileSystem scan') {
                             steps {
-                                // sh "trivy fs --scanners vuln,config . | tee filesystem_scanresults.txt"
-                                // sh "trivy fs --scanners vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
-                                // sh "bash check-trivy-scan-status.sh"
                                 sh 'mkdir -p reports'
                                 sh 'trivy filesystem --scanners vuln,config --format template --template "@html.tpl" -o reports/trivy-scan.html .'
                                 publishHTML target : [
@@ -95,7 +92,9 @@ pipeline {
                                     reportName: 'Trivy Scan',
                                     reportTitles: 'Trivy Scan'
                                 ]
-                            
+                                sh "trivy fs --scanners vuln,config . | tee filesystem_scanresults.txt"
+                                sh "trivy fs --scanners vuln,config --severity MEDIUM,HIGH, CRITICAL --exit-code 1 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
+                                sh "bash check-trivy-scan-status.sh"
                             }
                         }
 
@@ -137,7 +136,7 @@ pipeline {
             steps{
                script{
                             sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
-                            sh "trivy image $DOCKER_REGISTRY:latest --severity LOW,MEDIUM --exit-code 1 -f json -o image_scanresults.json --clear-cache" //UPDATE EXIT CODE TO FAIL PIPELINE
+                            sh "trivy image $DOCKER_REGISTRY:latest --severity LOW,MEDIUM --exit-code 1 --clear-cache" //UPDATE EXIT CODE TO FAIL PIPELINE
                             sh "bash check-trivy-scan-status.sh" //FAIL PIPELINE ON exit code 1
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             
@@ -187,7 +186,7 @@ pipeline {
                         "Build Number: ${env.BUILD_NUMBER}<br/>" +
                         "URL: ${env.BUILD_URL}<br/>",
                 to: 'yemisiomonijo20@yahoo.com',
-                attachmentsPattern: 'filesystem_scanresults.txt,filesystem_scanresults.json,image_scan.txt,image_scanresults.json'
+                attachmentsPattern: 'filesystem_scanresults.txt,image_scan.txt'
 
             cleanWs(    
                     cleanWhenNotBuilt: false,
