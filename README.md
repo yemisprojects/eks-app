@@ -317,6 +317,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 - You should receive an email with attachment of the build log and trivy image scan results
 
 ### Troubleshooting
+
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
 Run the command below and review the logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
 ```sh
@@ -329,6 +330,7 @@ kubectl logs -f -n kube-system  -l app.kubernetes.io/name=aws-load-balancer-cont
 
 ```
 
-### Improvements
+## Improvements
+
 OWASP Zap (DAST) can be implemented to improved the security posture of the application by finding security vulnerabilities in your running web applications.
 
