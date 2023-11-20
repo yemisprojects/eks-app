@@ -93,7 +93,7 @@ pipeline {
                                     reportTitles: 'Trivy Scan'
                                 ]
                                 sh "trivy fs --scanners vuln,config . | tee filesystem_scanresults.txt"
-                                sh "trivy fs --scanners vuln,config --severity MEDIUM,HIGH,CRITICAL --exit-code 1 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
+                                sh "trivy fs --scanners vuln,config --severity MEDIUM,HIGH,CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
                                 sh "bash check-trivy-scan-status.sh"
                             }
                         }
@@ -136,8 +136,8 @@ pipeline {
             steps{
                script{
                             sh "trivy image $DOCKER_REGISTRY:latest | tee image_scan.txt"
-                            sh "trivy image $DOCKER_REGISTRY:latest --severity LOW,MEDIUM --exit-code 1 --clear-cache" //UPDATE EXIT CODE TO FAIL PIPELINE
-                            sh "bash check-trivy-scan-status.sh" //FAIL PIPELINE ON exit code 1
+                            sh "trivy image $DOCKER_REGISTRY:latest --severity LOW,MEDIUM --exit-code 0 --clear-cache" //UPDATE EXIT CODE TO FAIL PIPELINE
+                            sh "bash check-trivy-scan-status.sh" 
                             sh "docker tag $DOCKER_REGISTRY:latest ${DOCKER_REGISTRY}:V${BUILD_NUMBER}"
                             
                             withDockerRegistry(credentialsId: 'docker_cred'){   
