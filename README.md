@@ -31,7 +31,7 @@ The main steps are as follows:
 7. If it passes, a docker image is built using Docker and the Maven build artifiact after which it is scanned for vulnerabilities using Trivy. If the scan passes, the image is uploaded to docker hub. 
 8. Notifications are sent to a slack channel to alert a DevOps team on the status of the pipeline and reports are sent to a preconfigured email.
 9. The pipeline triggers another job which updates the image tags in another git repository containing helm charts.
-10. Once the change is commited, Argo CD detects misalignment between the declared state of the application in the repository and it's running status and updates the running application in the EKS cluster if auto sync is enabled.  
+10. Once the change is commited, Argo CD detects the misalignment between the declared state of the application in the repository and it's running status and updates the running application in the EKS cluster if auto sync is enabled.  
 
 ## Application Stack
 The application is exposed using the AWS Application Load Balancer and the stack consists of a Java application, MySQL, Rabbitmq and Memcache 
