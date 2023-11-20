@@ -84,11 +84,11 @@ pipeline {
                                 sh "trivy fs --scanners vuln,config --exit-code 1 . | tee filesystem_scanresults.txt"
                                 sh "trivy fs --scanners vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 1 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
                                 script{
-                                        # Trivy scan result processing
+                                        //Trivy scan result processing
                                         exit_code=$?
                                         echo "Exit Code : $exit_code"
 
-                                        # Check scan results
+                                        //Check scan results
                                         if [[ "${exit_code}" == 1 ]]; then
                                             echo "Image scanning failed. Vulnerabilities found"
                                             exit 1;
