@@ -316,7 +316,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 
 - You should receive an email with attachment of the build log and trivy image scan results
 
-### Troubleshooting
+## Troubleshooting
 
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
 Run the command below and review the logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
