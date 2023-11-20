@@ -83,7 +83,7 @@ pipeline {
                             steps {
                                 sh "trivy fs --scanners vuln,config . | tee filesystem_scanresults.txt"
                                 sh "trivy fs --scanners vuln,config -f json -o filesystem_scanresults.json --severity CRITICAL --exit-code 0 --clear-cache . " //UPDATE EXIT CODE TO FAIL PIPELINE
-                                sh "sudo bash check-trivy-scan-status.sh"
+                                sh "bash check-trivy-scan-status.sh"
                             
                             }
                         }
