@@ -9,11 +9,11 @@ This repository contains the source code and Jenkinsfile used to automate the Co
 The following tools have been used in this solution
 
 - [Jenkins](https://www.jenkins.io) is an open source automation server which enables developers to reliably build, test, and deploy their software. With numerous plugins available it provides easy integration to many third party systems. If server management is a not a major concern, Jenkins is a great choice for CI/CD.
-- [Maven](https://maven.apache.org) is a build automation tool used primarily for build an managing Java projects
+- [Maven](https://maven.apache.org) is a build automation tool used primarily for building an managing Java projects
 - [Checkstyle](https://checkstyle.sourceforge.io) is a development tool to help programmers write Java code that adheres to a coding standard. It automates the process of checking Java code to spare humans of this boring (but important) task. This makes it ideal for projects that want to enforce a coding standard.
 - [OWASP](https://owasp.org/www-project-dependency-check/) Dependency-Check is a Software Composition Analysis (SCA) tool that actively scans through a project's dependencies to detect and report on publicly disclosed vulnerabilities, thereby improving application security.
 - [SonarQube](https://www.sonarsource.com/products/sonarqube/) (SAST) – Catches bugs and vulnerabilities in your app, with thousands of automated Static Code Analysis rules.
-- [Trivy](https://aquasecurity.github.io/trivy/v0.47/) is an open-source comprehensive vulnerability Scanner for containers and other artefacts. It is quick and scan filesystems, images, kubernetes cluster, IaC configuration, Git repository making it one of the most versatile security scanners available.
+- [Trivy](https://aquasecurity.github.io/trivy/v0.47/) is an open-source comprehensive vulnerability Scanner for containers and other artefacts. It is quick and canscan filesystems, images, kubernetes cluster, IaC configuration, Git repository making it one of the most versatile security scanners available.
 - [Argo CD](https://argo-cd.readthedocs.io/en/stable/) is a kubernetes controller which continuously monitors running applications and compares the current, live state against the desired target state (as specified in the Git repo). A deployed application whose live state deviates from the target state is considered OutOfSync. Argo CD reports & visualizes the differences, while providing facilities to automatically or manually sync the live state back to the desired target state. Any modifications made to the desired target state in the Git repo can be automatically applied and reflected in the specified target environments.
 
 <h2 align="center">Pipeline Architecture</h2>
