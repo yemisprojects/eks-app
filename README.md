@@ -297,7 +297,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 ```
 - Push all changes to the repository
 
-### Trigger Jenkins Pipeline
+#### Step 7. Trigger Jenkins Pipeline
 - Comit and push your changes to the main branch
 - This should trigger the `k8s-pipeline`. This is a pipeline view using blue ocean
 <img alt="Pipeline stages" src="https://github.com/yemisprojects/eks-app/blob/main/images/Pipeline%201.png">
@@ -315,6 +315,27 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 <img alt="Slack notification" src="https://github.com/yemisprojects/eks-app/blob/main/images/slack%20notification.png">
 
 - You should receive an email with attachment of the build log and trivy image scan results
+
+
+## Login to ArgoCD UI
+
+- Connect your Github Helm chart repo
+- Create a new app
+- Enable auto sync
+- Observe the deployment of application
+- A load balancer will be created to expose the load balancer will be created to expose the web application using the ingress rule you created. Note that this can take some time (about 5mins)
+
+## How to Access the application
+
+- Once the application is deployed and ingress is provisioned. Obtain the DNS of the loadbalancer and add it as a CNAME record within your domain 
+- Goto your web browser and fill in the domain
+- The page below should show
+- Login with these default credential 
+
+```
+username: admin_vp
+password: admin_vp
+```
 
 ## Troubleshooting
 
