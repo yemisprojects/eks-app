@@ -380,6 +380,11 @@ password: admin_vp
 - This is the compute stats view for the vprofile application
 <img alt="Grafana UI" src="https://github.com/yemisprojects/eks-app/blob/main/images/Grafana%20Dashboard_1.png">
 
+- Additional image below shows memory stats for the app and backend pods
+
+<img alt="Grafana UI 2" src="https://github.com/yemisprojects/eks-app/blob/main/images/Grafana_dashboard_2.png">
+
+
 ## View Horizontal Pod Autoscaler for app
 - To see the HPA data for the app. Run these command. The output is shown as well
 ```sh
