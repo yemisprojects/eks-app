@@ -352,7 +352,8 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 - Observe the deployment of application
     <img alt="argocd UI" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.38.30%E2%80%AFPM.png">
 
-- A load balancer will be created to expose the web application using the ingress rule you created. Note that this can take some time (about 5mins)
+- A load balancer will be created to expose the web application using the ingress rule you created. Reference the screenshot below. Note that this can take some time (about 5mins)
+        <img alt="Load balancer ingress" src="https://github.com/yemisprojects/eks-app/blob/develop/images/Loadbalancers-app-grafana.png">
 
 ## How to Access the application
 
