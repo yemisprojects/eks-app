@@ -284,7 +284,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
         DOCKER_REGISTRY = "yemisiomonijo/vprofileapp"
     }
 ```
-- Replace `vprofile.devopsprotech.com` in the `webapp/templates/vproapp-ingress.yaml` file with a CNAME record within your domain. I have used Route53
+- Replace `vprofile.devopsprotech.com` in the `webapp/templates/vproapp-ingress.yaml` file with a CNAME record to be used at a later step within your domain.
 ```
 ......
   rules:
@@ -295,9 +295,6 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
             pathType: Prefix
             backend:
 ```
-- This is a snippet of the same change when using Route53
-<img alt="Route53 cname change" src="https://github.com/yemisprojects/eks-app/blob/main/images/R53_record.png">
-
 - Push all changes to the repository
 
 #### Step 7. Trigger Jenkins Pipeline
@@ -357,7 +354,10 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 
 ## How to Access the application
 
-- Once the application is deployed and ingress is provisioned. Obtain the DNS of the loadbalancer and add it as a CNAME record within your domain 
+- Once the application is deployed and ingress is provisioned. Obtain the DNS of the loadbalancer (see screenshot above) and add it as a CNAME record within your domain 
+    - This is a snippet of the same change when using Route53
+    <img alt="Route53 cname change" src="https://github.com/yemisprojects/eks-app/blob/main/images/R53_record.png">
+
     - To view the apps kubernetes resources
     ```
     kubectl get all -n vprofile
@@ -388,8 +388,6 @@ NAME      REFERENCE            TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
 vproapp   Deployment/vproapp   0%/50%    1         10        1          4h1m
 ```
 
-
-
 ## Troubleshooting
 
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
@@ -403,10 +401,12 @@ kubectl logs -f POD_ID -f
 kubectl logs -f -n kube-system  -l app.kubernetes.io/name=aws-load-balancer-controller
 ```
 
-## Improvements
+## Other improvements or considerations
 
 - OWASP Zap (DAST) can be implemented to improved the security posture of the application by finding security vulnerabilities in your running web applications.
-- Trivy kubernetes scan operator
-- ECR for continous image scanning
+- Trivy kubernetes scan operator can also be used to scan resources at run time from within the cluster
+- ECR can be used for continous image scanning
+- Access Management using RBAC and IAM should be adopted
+- A logging solution should be used. Possibly adopt fluentd and stream logs to cloudwatch which can be fed/aggregated into other solutions
 
 
