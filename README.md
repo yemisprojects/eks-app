@@ -336,26 +336,30 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
     ```
     kubectl get all -n vprofile
     ```    
-- Goto your web browser and provide your web address for your domain
-- The page below should show the app login page.. The default login credential is shown below
+- Goto your web browser and provide your web address for your domain. In this example it is `vprofile.devopsprotech.com`. The default login credential is shown below.
 ```
 username: admin_vp
 password: admin_vp
 ```
+- The page below should show the app login page. 
 <img alt="Login page" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.33.46%E2%80%AFPM.png">
 
+- After logging in, you should see this page. You can play around the UI.
+<img alt="Logged in user" src="">
+
+
+## 
 ## Troubleshooting
 
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
 Run the command below and review the logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
 ```sh
-aws eks update-kubeconfig --region us-west-2 --name eks-poc --profile <eksadmin1>
+aws eks update-kubeconfig --region us-east-1 --name eks-poc --profile <eksadmin1>
 kubectl logs -f POD_ID -f
 ```
 - To check the AWS load balancer controller logs
 ```sh
 kubectl logs -f -n kube-system  -l app.kubernetes.io/name=aws-load-balancer-controller
-
 ```
 
 ## Improvements
