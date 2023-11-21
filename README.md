@@ -314,7 +314,8 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 - A slack notification should be recieved on the slack channel
 <img alt="Slack notification" src="https://github.com/yemisprojects/eks-app/blob/main/images/slack%20notification.png">
 
-- You should receive an email with attachment of the build log and trivy image scan results
+- You should receive an email with attachment of the build log and trivy image scan results. See the screenshot below.
+<img alt="Email notice" src="https://github.com/yemisprojects/eks-app/blob/main/images/Email%20attachments.png">
 
 #### Step 8. Login to ArgoCD UI and connect the app
 
