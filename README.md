@@ -319,17 +319,40 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 
 - You should receive an email with attachment of the build log and trivy image scan results
 
-## Login to ArgoCD UI
+#### Step 8. Login to ArgoCD UI and connect the app
 
-- Connect your Github Helm chart repo. Go to Settings and use the screenshot below
+- Login to Argo CD UI using the steps [here](https://github.com/yemisprojects/eks-infra#how-to-access-argo-cd-ui) in my eks-infra repo
+- Connect your Github Helm chart repo to Argo CD controller. Go to `Settings` -> `Repositories` -> Click `Connect Repo`
+    - Replace _xxxxx_ with your github username. Click Connect and verify the connection status shows _Successfull_ to represent connected
+    ```
+        Choose your authentication method: https
+        Type: git
+        Project: default
+        Repository URL: https://github.com/xxxxx/kubernetes-manifests/tree/main
+        username: Provide your github username
+        Password: Provide a github token
+    ```
+    - A screenshot of the configuration is shown below. 
 <img alt="Connect repo" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.40.24%E2%80%AFPM.png">
-- Create a new app
-<img alt="Create new app" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.03.37%E2%80%AFPM.png">
-- Enable auto sync
-- Observe the deployment of application
-<img alt="argocd UI" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.38.30%E2%80%AFPM.png">
-- A load balancer will be created to expose the load balancer will be created to expose the web application using the ingress rule you created. Note that this can take some time (about 5mins)
 
+- Create a new app.
+    - Goto `Applications` -> `NEW APP` and provide the information below and Click Create
+        ```
+        Application Name: vprofile
+        Project Name: default
+        Sync Policy: Automatic
+        Repository URL: Seclect HELM and your repository URL should pop up automatically
+        Path: webapp
+        CLuster URL: https://kubernetes.default.svc
+        Namespace: vprofile
+        ```
+    - Here is a screenshot for the configuration above
+    <img alt="Create new app" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.03.37%E2%80%AFPM.png">
+
+- Observe the deployment of application
+    <img alt="argocd UI" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.38.30%E2%80%AFPM.png">
+
+- A load balancer will be created to expose the web application using the ingress rule you created. Note that this can take some time (about 5mins)
 
 ## How to Access the application
 
