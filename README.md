@@ -385,7 +385,6 @@ password: admin_vp
 
 <img alt="Grafana UI 2" src="https://github.com/yemisprojects/eks-app/blob/main/images/Grafana_dashboard_2.png">
 
-
 ## View Horizontal Pod Autoscaler for app
 - To see the HPA data for the app. Run these command. The output is shown as well
 ```sh
