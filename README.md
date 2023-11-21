@@ -169,7 +169,7 @@ mysql -u <user_name> -p accounts < accountsdb.sql
             ID: slack_token
             Description: slack_token
     ```
-    - Add Dockerhub login credential using the configuration below. _Replace **** with docker password and userx _ 
+    - Add Dockerhub login credential using the configuration below. _Replace **** with docker password and userx_ 
     ```
             Kind: Username with password
             Username: userx			
