@@ -319,23 +319,30 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 
 ## Login to ArgoCD UI
 
-- Connect your Github Helm chart repo
+- Connect your Github Helm chart repo. Go to Settings and use the screenshot below
+<img alt="Connect repo" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.40.24%E2%80%AFPM.png">
 - Create a new app
+<img alt="Create new app" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.03.37%E2%80%AFPM.png">
 - Enable auto sync
 - Observe the deployment of application
+<img alt="argocd UI" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.38.30%E2%80%AFPM.png">
 - A load balancer will be created to expose the load balancer will be created to expose the web application using the ingress rule you created. Note that this can take some time (about 5mins)
+
 
 ## How to Access the application
 
 - Once the application is deployed and ingress is provisioned. Obtain the DNS of the loadbalancer and add it as a CNAME record within your domain 
-- Goto your web browser and fill in the domain
-- The page below should show
-- Login with these default credential 
-
+    - To view the apps kubernetes resources
+    ```
+    kubectl get all -n vprofile
+    ```    
+- Goto your web browser and provide your web address for your domain
+- The page below should show the app login page.. The default login credential is shown below
 ```
 username: admin_vp
 password: admin_vp
 ```
+<img alt="Login page" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.33.46%E2%80%AFPM.png">
 
 ## Troubleshooting
 
