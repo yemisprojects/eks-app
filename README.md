@@ -355,11 +355,11 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 
 ## How to Access the application
 
-- Once the application is deployed and ingress is provisioned. Obtain the DNS of the loadbalancer (see screenshot above) and add it as a CNAME record within your domain 
+- Once the application is deployed and ingress is provisioned. Obtain the DNS name of the loadbalancer (see screenshot above), add it as a CNAME record within your domain. The load balancer name is called `vprofileapp-ingress`
     - This is a snippet of the same change when using Route53
     <img alt="Route53 cname change" src="https://github.com/yemisprojects/eks-app/blob/main/images/R53_record.png">
 
-    - To view the apps kubernetes resources
+    - To view the kubernetes resources for the application within its namespace named vprofile run the command below
     ```
     kubectl get all -n vprofile
     ```    
@@ -398,9 +398,9 @@ vproapp   Deployment/vproapp   0%/50%    1         10        1          4h1m
 
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
 Run the command below and review the logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
-```sh
+```
 aws eks update-kubeconfig --region us-east-1 --name eks-poc --profile <eksadmin1>
-kubectl logs -f POD_ID -f
+kubectl logs -f <pod name> -f
 ```
 - To check the AWS load balancer controller logs
 ```sh
