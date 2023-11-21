@@ -295,6 +295,9 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
             pathType: Prefix
             backend:
 ```
+- This is a snippet of the same change when using Route53
+<img alt="Route53 cname change" src="https://github.com/yemisprojects/eks-app/blob/main/images/R53_record.png">
+
 - Push all changes to the repository
 
 #### Step 7. Trigger Jenkins Pipeline
@@ -315,7 +318,6 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 <img alt="Slack notification" src="https://github.com/yemisprojects/eks-app/blob/main/images/slack%20notification.png">
 
 - You should receive an email with attachment of the build log and trivy image scan results
-
 
 ## Login to ArgoCD UI
 
@@ -345,10 +347,25 @@ password: admin_vp
 <img alt="Login page" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.33.46%E2%80%AFPM.png">
 
 - After logging in, you should see this page. You can play around the UI.
-<img alt="Logged in user" src="">
+<img alt="Logged in user" src="https://github.com/yemisprojects/eks-app/blob/main/images/app_view_after_login.png">
+
+## Grafana Dashboard access
+
+- Follow the steps [here](https://github.com/yemisprojects/eks-infra#how-to-access-grafanna) in my eks-infra repo to access Grafana and import the Kubernetes dashboard.
+- To view metrics and stats from Grafana for the vprofile application after importing. Goto `Dashboard` -> `Kubernetes/Compute Resources/Namespace (Workloads)`.
+- This is the compute stats view for the vprofile application
+<img alt="Grafana UI" src="https://github.com/yemisprojects/eks-app/blob/main/images/Grafana%20Dashboard_1.png">
+
+## View Horizontal Pod Autoscaler for app
+- To see the HPA data for the app. Run these command. The output is shown as well
+```sh
+kubectl get hpa vproapp -n vprofile                                                                                                                                         ─╯
+NAME      REFERENCE            TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+vproapp   Deployment/vproapp   0%/50%    1         10        1          4h1m
+```
 
 
-## 
+
 ## Troubleshooting
 
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
