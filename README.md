@@ -399,7 +399,7 @@ vproapp   Deployment/vproapp   0%/50%    1         10        1          4h1m
 Run the command below and review the logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
 ```
 aws eks update-kubeconfig --region us-east-1 --name eks-poc --profile <eksadmin1>
-kubectl logs -f <pod name> -f
+kubectl logs -f <pod name>
 ```
 - To check the AWS load balancer controller logs
 ```sh
