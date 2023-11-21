@@ -368,8 +368,8 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 username: admin_vp
 password: admin_vp
 ```
-- The page below should show the app login page. 
-<img alt="Login page" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.33.46%E2%80%AFPM.png">
+- The app login page is shown below 
+<img alt="Login page" src="https://github.com/yemisprojects/eks-app/blob/main/images/app_login_page.png">
 
 - After logging in, you should see this page. You can play around the UI.
 <img alt="Logged in user" src="https://github.com/yemisprojects/eks-app/blob/main/images/app_view_after_login.png">
