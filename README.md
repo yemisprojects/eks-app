@@ -317,9 +317,10 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
 - You should receive an email with attachment of the build log and trivy scan results. See the screenshot below.
 <img alt="Email notice" src="https://github.com/yemisprojects/eks-app/blob/main/images/Email%20attachments.png">
 
-- The Trivy scan results are also available as an HTML page from the Jenkins web UI
+- The Trivy scan results are also available as an HTML page from the Jenkins web UI. Click the Trivy scan tab as shown below
 <img alt="Trivy scan 1" src="https://github.com/yemisprojects/eks-app/blob/main/images/plugins_accessible_from_Jenkins_build_UI.png">
 
+- You should see it's scan results rendered as an HTML page
 <img alt="Trivy scan 1" src="https://github.com/yemisprojects/eks-app/blob/main/images/trivy_scan_results.png">
 
 #### Step 8. Login to ArgoCD UI and connect the app
