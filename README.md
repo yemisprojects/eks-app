@@ -401,8 +401,7 @@ vproapp   Deployment/vproapp   0%/50%    1         10        1          4h1m
 
 ## Troubleshooting
 
-- If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
-Run the commands below and review the pods logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
+- If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo. Run the commands below and review the pods logs.
 ```sh
 aws configure --profile eksadmin1
 aws eks update-kubeconfig --region us-east-1 --name eks-poc --profile eksadmin1
@@ -419,6 +418,7 @@ kubectl logs -f -n kube-system  -l app.kubernetes.io/name=aws-load-balancer-cont
 - Trivy kubernetes scan operator can also be used to scan resources at run time from within the cluster
 - ECR can be used for continous image scanning
 - Access Management using RBAC and IAM should be adopted
-- A logging solution should be used. Possibly adopt fluentd and stream logs to cloudwatch which can be fed/aggregated into other solutions
+- A logging solution should be used. Possibly adopt fluentd and stream logs to cloudwatch which can be stream/aggregated into other solutions
+- Use RDS or EBS for persistent data storage 
 
 
