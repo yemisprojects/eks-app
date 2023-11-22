@@ -334,7 +334,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
         Project: default
         Repository URL: https://github.com/xxxxx/kubernetes-manifests/tree/main
         username: Provide your github username
-        Password: Provide a github token
+        Password: Provide your github token
     ```
     - A screenshot of the configuration is shown below. 
 <img alt="Connect repo" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.40.24%E2%80%AFPM.png">
@@ -353,7 +353,7 @@ After forking this eks-app repo, make the following changes to the Jenkinsfile
     - Here is a screenshot for the configuration above
     <img alt="Create new app" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.03.37%E2%80%AFPM.png">
 
-- Observe the deployment of application
+- Observe the deployment of application. Once rollout is completed, the app's health status should report `HEALTHY` as shown below and the `Current Sync Status` should be `Sync OK`
     <img alt="argocd UI" src="https://github.com/yemisprojects/kubernetes-manifests/blob/main/images/Screenshot%202023-11-16%20at%202.38.30%E2%80%AFPM.png">
 
 - A load balancer will be created to expose the web application using the ingress rule you created. Reference the screenshot below. Note that this can take some time (about 5mins)
