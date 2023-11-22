@@ -402,10 +402,11 @@ vproapp   Deployment/vproapp   0%/50%    1         10        1          4h1m
 ## Troubleshooting
 
 - If there are any issues with pods, authenticate using the `eksadmin1` user mentioned in the eks-infra repo.
-Run the command below and review the logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
-```
-aws eks update-kubeconfig --region us-east-1 --name eks-poc --profile <eksadmin1>
-kubectl logs -f <pod name>
+Run the commands below and review the pods logs. Replace `eksadmin1` with the AWS CLI profile created for the `eksadmin1`user
+```sh
+aws configure --profile eksadmin1
+aws eks update-kubeconfig --region us-east-1 --name eks-poc --profile eksadmin1
+kubectl logs -f pod_name
 ```
 - To check the AWS load balancer controller logs
 ```sh
